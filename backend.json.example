@@ -1,0 +1,24 @@
+{
+    "backend": {
+        "ignored_labels": ["ignored"],
+        "min_interval": 5,
+        "rpc": {
+            "host": "localhost",
+            "port": 4000
+        },
+        "rsync": {
+            "remote_host": "hostname",
+            "local_dst": "./"
+        }
+    },
+    "deluge": {
+        "url":      "https://url.to/deluge",
+        "password": "password"
+    },
+    "torrentsyncdb": {
+        "host":     "localhost",
+        "database": "torrentsync",
+        "user":     "torrentsync",
+        "password": "password"
+    }
+}
