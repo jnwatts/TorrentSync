@@ -1,7 +1,7 @@
 {
-    "name": "laravel/laravel",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "name": "jnwatts/TorrentSync",
+    "description": "PHP web UI + Python backend which reads the list of completed torrents from a Deluge daemon and allows the user to invoke rsync for a given entry.",
+    "keywords": ["deluge", "rsync", "php", "python"],
     "license": "MIT",
     "type": "project",
     "require": {
