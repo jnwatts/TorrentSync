@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Laravel Quickstart - Basic</title>
+        <title>TorrentSync</title>
 
         <!-- CSS And JavaScript -->
         <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
