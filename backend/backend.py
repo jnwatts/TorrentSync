@@ -1,12 +1,17 @@
 from .setinterval import setInterval
 from .deluge import Deluge
 from .torrentsyncdb import TorrentSyncDb, Task, TaskState, TaskCommand
+from .log import Log
+from .rsync import Rsync
+import logging
 from flask import Flask
 from jsonrpc.backend.flask import api
 import os
 import signal
 from subprocess import Popen
 import time
+
+logging.disable(logging.ERROR)
 
 class Backend:
     instance = None
@@ -48,7 +53,7 @@ class Backend:
         self.last_check = time.time()
         task = self.torrentsyncdb.oldest_task()
         if task:
-            if len(task.hash) == 0:
+            if task.hash == "refresh":
                 task.set_state(TaskState.syncing)
                 self.refresh_torrents()
                 task.set_state(TaskState.complete)
@@ -63,37 +68,72 @@ class Backend:
 
         torrents = self.deluge.torrents()
         torrents = {k:v for (k,v) in torrents.items() if v['label'] not in self.params['ignored_labels']}
+        if self.params['debug']['enabled']:
+            for (k,v) in self.params['debug']['tasks'].items():
+                try:
+                    torrents[k] = v
+                except Exception as e:
+                    Log('Debug task failed %s' % e.args);
+
+        for (h,t) in torrents.items():
+            t['local_size'] = self.get_local_size(self.get_local_path(t['name']))
+
         self.torrentsyncdb.update_torrents(torrents)
 
+    def get_local_path(self, name):
+        return "%s/%s" % (self.params['rsync']['local_dst'], name)
+
+    def get_local_size(self, path):
+        size = 0
+        if os.path.exists(path):
+            size = os.stat(path).st_size
+            if os.path.isdir(path):
+                size += sum([e.stat().st_size for e in os.scandir(path) if not e.is_dir()])
+        return size
+
     def check_task(self, task):
+        old_state = task.state
         if task.state == TaskState.init:
             if task.command == TaskCommand.start:
-                print('Started %s' % task.hash)
-                pid = self.spawn_rsync(task.hash)
-                task.set_pid(pid)
-                task.set_state(TaskState.syncing)
+                try:
+                    pid = self.spawn_rsync(task.hash)
+                    task.set_pid(pid)
+                    task.set_state(TaskState.syncing)
+                except Exception as e:
+                    #TODO: Completion with error message?
+                    Log('Failed to spawn task: %s' % e.args)
+                    task.set_state(TaskState.complete)
             else:
                 task.set_state(TaskState.complete)
         elif task.state == TaskState.syncing:
+            # Update local size
+            torrent = self.torrentsyncdb.get_torrent(task.hash)
+            torrent.local_size = self.get_local_size(self.get_local_path(torrent.name))
+
             is_alive = False
             if task.pid in self.procs:
                 p = self.procs[task.pid]
-                if p.poll():
+                if p.poll() is None:
                     is_alive = True
             if task.command == TaskCommand.stop and is_alive:
                 os.kill(task.pid, signal.SIGINT)
                 is_alive = False
             if not is_alive:
-                print('Completed %s' % task.hash)
                 task.set_state(TaskState.complete)
-                del self.procs[task.pid]
+                if task.pid in self.procs:
+                    del self.procs[task.pid]
 
     def spawn_rsync(self, hash):
-        torrent = self.torrentsyncdb.get_torrent(hash)
-        rsync_params = self.params['rsync']
-        src = "%s:'%s/%s'" % (rsync_params['remote_host'], torrent['save_path'], torrent['name'])
-        dst = "%s/" % (rsync_params['local_dst'])
-        args = ['rsync', '-a', src, dst]
+        if len(hash) > 10:
+            torrent = self.torrentsyncdb.get_torrent(hash)
+            rsync_params = self.params['rsync']
+            src = "%s:'%s/%s'" % (rsync_params['remote_host'], torrent.save_path, torrent.name)
+            dst = "%s" % (rsync_params['local_dst'])
+            args = ['rsync', '-av', src, dst]
+            Log(args)
+        else:
+            # Debug task
+            args = ['sleep', self.params['debug']['tasks'][hash]['duration']]
         p = Popen(args)
         self.procs[p.pid] = p
         return p.pid

@@ -33,7 +33,7 @@ class Deluge:
         return self.invoke("auth.login", [self.password])
 
     def torrents(self):
-        return self.invoke("core.get_torrents_status", [{}, ["name", "save_path", "progress", "label", "time_added"]])
+        return self.invoke("core.get_torrents_status", [{}, ["name", "save_path", "progress", "label", "time_added", "total_wanted"]])
 
     def labels(self):
         return self.invoke("label.get_labels")

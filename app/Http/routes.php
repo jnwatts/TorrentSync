@@ -13,9 +13,10 @@ use Illuminate\Http\Request;
 | and give it the controller to call when that URI is requested.
 |
 */
-Route::get('/',                 ['as'=>'torrent.index',     'uses'=>'TorrentController@index']);
-Route::get('/refresh',          ['as'=>'torrent.refresh',   'uses'=>'TorrentController@refresh']);
-Route::get('/clear',            ['as'=>'torrent.clear',     'uses'=>'TorrentController@clear']);
-Route::get('/{hash}/transfer',  ['as'=>'torrent.transfer',  'uses'=>'TorrentController@transfer']);
-Route::get('/{hash}/stop',      ['as'=>'torrent.stop',      'uses'=>'TorrentController@stop']);
-Route::get('/{hash}/clear',     ['as'=>'torrent.clear',     'uses'=>'TorrentController@clear']);
+Route::get('/',                 ['as'=>'torrents.index',     'uses'=>'TorrentController@index']);
+Route::get('/events',           ['as'=>'torrents.events',    'uses'=>'TorrentController@events']);
+Route::get('/refresh',          ['as'=>'torrents.refresh',   'uses'=>'TorrentController@refresh']);
+Route::get('/clear',            ['as'=>'torrents.clear',     'uses'=>'TorrentController@clear']);
+Route::get('/{hash}/transfer',  ['as'=>'torrent.transfer',   'uses'=>'TorrentController@transfer']);
+Route::get('/{hash}/stop',      ['as'=>'torrent.stop',       'uses'=>'TorrentController@stop']);
+Route::get('/{hash}/clear',     ['as'=>'torrent.clear',      'uses'=>'TorrentController@clear']);

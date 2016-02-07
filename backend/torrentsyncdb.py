@@ -2,6 +2,7 @@ import mysql.connector
 import os.path
 import datetime
 from enum import IntEnum
+from .log import Log
 
 class TorrentSyncDb:
     def __init__(self, **params):
@@ -44,6 +45,9 @@ class TorrentSyncDb:
 
         db.close()
 
+    def update_torrent(self, torrent):
+        self.update_torrents({torrent['hash']: torrent})
+
     def update_torrents(self, torrents):
         db = self.get_db()
         cur = db.cursor()
@@ -57,11 +61,11 @@ class TorrentSyncDb:
             if (len(torrent['label']) == 0):
                 torrent['label'] = 'unlabeled'
             sql = """REPLACE INTO `torrents` (
-                    `hash`, `name`, `save_path`, `progress`, `label_id`, `time_added`, `updated_at`
+                    `hash`, `name`, `save_path`, `progress`, `label_id`, `time_added`, `updated_at`, `total_wanted`, `local_size`
                 ) VALUES (
-                    %s, %s, %s, %s, (SELECT `id` FROM `labels` WHERE `label` = %s), %s, NOW()
+                    %s, %s, %s, %s, (SELECT `id` FROM `labels` WHERE `label` = %s), %s, NOW(), %s, %s
                 )"""
-            cur.execute(sql, (t, torrent['name'], torrent['save_path'], torrent['progress'], torrent['label'], datetime.datetime.fromtimestamp(torrent['time_added'])))
+            cur.execute(sql, (t, torrent['name'], torrent['save_path'], torrent['progress'], torrent['label'], datetime.datetime.fromtimestamp(torrent['time_added']), torrent['total_wanted'], torrent['local_size']))
         db.commit()
 
         sql = 'DELETE FROM `torrents` WHERE `updated_at` < %s'
@@ -77,6 +81,10 @@ class TorrentSyncDb:
         sql = 'SELECT * FROM `torrents` WHERE `hash` = %s'
         cur.execute(sql, [hash])
         result = cur.fetchone()
+        if result is None:
+            raise Exception('Hash not found: %s' % hash)
+
+        result = Torrent(self, result)
 
         db.close()
 
@@ -101,6 +109,29 @@ class TorrentSyncDb:
 
         return task
 
+class Torrent:
+    def __init__(self, tdb, row):
+        self.tdb = tdb
+        self.fields = []
+        for f in row:
+            if f != 'hash':
+                # Don't try to update hash column
+                self.fields.append(f)
+            setattr(self, f, row[f])
+
+    def __setattr__(self, name, value):
+        if hasattr(self, 'fields') and hasattr(self, 'hash'):
+            if name in self.fields:
+                db = self.tdb.get_db()
+                cur = db.cursor()
+
+                sql = 'UPDATE `torrents` SET `' + name + '` = %s, `updated_at` = NOW() WHERE `hash` = %s'
+                cur.execute(sql, (value, self.hash))
+                db.commit()
+
+                db.close()
+        return super(Torrent, self).__setattr__(name, value)
+
 class Task:
     def __init__(self, **params):
         self.tdb = params['tdb']
@@ -117,6 +148,7 @@ class Task:
         cur = db.cursor()
 
         sql = 'UPDATE `tasks` SET `state` = %s, `updated_at` = NOW() WHERE `id` = %s'
+        Log('TASK %s %s' % (self.state.name, self.hash));
         cur.execute(sql, (self.state.name, self.id))
         db.commit()
 

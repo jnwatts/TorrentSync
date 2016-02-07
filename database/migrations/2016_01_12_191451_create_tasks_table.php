@@ -20,6 +20,7 @@ class CreateTasksTable extends Migration
             $table->enum('state', ['init', 'syncing', 'complete']);
             $table->integer('pid');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

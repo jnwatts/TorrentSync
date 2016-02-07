@@ -2,6 +2,8 @@
 
 return [
 
+    'backend_url' => env('BACKEND_URL', ''),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment
@@ -39,7 +41,7 @@ return [
     |
     */
 
-    'url' => 'http://home.sroz.net'.env('SITE_PREFIX', ''),
+    'url' => env('SITE_DOMAIN', '').env('SITE_PREFIX', ''),
 
     'site_prefix' => env('SITE_PREFIX', ''),
 
@@ -159,6 +161,8 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+        Lord\Laroute\LarouteServiceProvider::class,
+        Laracasts\Utilities\JavaScript\JavaScriptServiceProvider::class,
     ],
 
     /*
@@ -204,7 +208,6 @@ return [
         'URL'       => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View'      => Illuminate\Support\Facades\View::class,
-
     ],
 
 ];

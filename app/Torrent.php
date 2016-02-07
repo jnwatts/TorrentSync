@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Log;
 use Illuminate\Database\Eloquent\Model;
 
 class Torrent extends Model
@@ -10,14 +11,16 @@ class Torrent extends Model
     protected $table = 'torrents';
     public $timestamps = false;
     public $incrementing = false;
+    protected $appends = ['task', 'label'];
+    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
 
-    public function label()
+    public function getLabelAttribute()
     {
-        return $this->belongsTo('App\Label');
+        return $this->belongsTo('App\Label', 'label_id', 'id')->first();
     }
 
-    public function task()
+    public function getTaskAttribute()
     {
-        return $this->hasOne('App\Task', 'hash', 'hash');
+        return $this->hasOne('App\Task', 'hash', 'hash')->first();
     }
 }
