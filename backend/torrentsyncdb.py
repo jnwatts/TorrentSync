@@ -1,7 +1,7 @@
 import mysql.connector
 import os.path
 import datetime
-from enum import IntEnum
+from enum import Enum, IntEnum
 from .log import Log
 
 class TorrentSyncDb:
@@ -102,69 +102,78 @@ class TorrentSyncDb:
 
         task = None
         for row in cur:
-            task = Task(tdb=self, **row)
+            task = Task(self, row)
             break
 
         db.close()
 
         return task
 
-class Torrent:
-    def __init__(self, tdb, row):
-        self.tdb = tdb
-        self.fields = []
+class TdbObject:
+    def __init__(self, tdb, row, **params):
+        self._tdb = tdb
+        self._table = params['table']
+        self._ids = params['ids']
         for f in row:
-            if f != 'hash':
-                # Don't try to update hash column
-                self.fields.append(f)
-            setattr(self, f, row[f])
+            super(TdbObject, self).__setattr__(f, self.__fromsql__(f, row[f]));
 
-    def __setattr__(self, name, value):
-        if hasattr(self, 'fields') and hasattr(self, 'hash'):
-            if name in self.fields:
-                db = self.tdb.get_db()
-                cur = db.cursor()
+    def __setattr__(self, attr, value):
+        if not attr.startswith('_') and not attr in self._ids:
+            db = self._tdb.get_db()
+            cur = db.cursor()
 
-                sql = 'UPDATE `torrents` SET `' + name + '` = %s, `updated_at` = NOW() WHERE `hash` = %s'
-                cur.execute(sql, (value, self.hash))
-                db.commit()
+            ids = self._ids
 
-                db.close()
-        return super(Torrent, self).__setattr__(name, value)
+            sql = 'UPDATE `' + self._table + '` SET `' + attr + '` = %s, `updated_at` = NOW() WHERE '
+            sql += ' AND '.join(['`' + id + '` = %s' for id in ids])
+            params = (self.__tosql__(attr, value),) + tuple([getattr(self, id) for id in ids])
 
-class Task:
-    def __init__(self, **params):
-        self.tdb = params['tdb']
-        self.id = params['id']
-        self.pid = params['pid']
-        self.hash = params['hash']
-        self.command = TaskCommand(params['command'])
-        self.state = TaskState(params['state'])
+            cur.execute(sql, params)
+            db.commit()
 
-    def set_state(self, state):
-        self.state = state
+            sql = 'SELECT `updated_at` FROM `' + self._table + '` WHERE '
+            sql += ' AND '.join(['`' + id + '` = %s' for id in ids])
+            params = tuple([getattr(self, id) for id in ids])
+            cur.execute(sql, params)
+            super(TdbObject, self).__setattr__('updated_at', cur.fetchone()[0])
 
-        db = self.tdb.get_db()
-        cur = db.cursor()
+            db.close()
+        return super(TdbObject, self).__setattr__(attr, value)
 
-        sql = 'UPDATE `tasks` SET `state` = %s, `updated_at` = NOW() WHERE `id` = %s'
-        Log('TASK %s %s' % (self.state.name, self.hash));
-        cur.execute(sql, (self.state.name, self.id))
-        db.commit()
+class Torrent(TdbObject):
+    def __init__(self, tdb, row):
+        super(Torrent, self).__init__(
+                tdb,
+                row,
+                table='torrents',
+                ids = ['hash']);
 
-        db.close()
+    def __fromsql__(self, attr, value):
+        return value
 
-    def set_pid(self, pid):
-        self.pid = pid
+    def __tosql__(self, attr, value):
+        return value
 
-        db = self.tdb.get_db()
-        cur = db.cursor()
+class Task(TdbObject):
+    def __init__(self, tdb, row):
+        super(Task, self).__init__(
+                tdb,
+                row,
+                table='tasks',
+                ids = ['id', 'hash']);
 
-        sql = 'UPDATE `tasks` SET `pid` = %s, `updated_at` = NOW() WHERE `id` = %s'
-        cur.execute(sql, (self.pid, self.id))
-        db.commit()
+    def __tosql__(self, attr, value):
+        if isinstance(value, IntEnum):
+            value = value.name
+        return value
 
-        db.close()
+    def __fromsql__(self, attr, value):
+        if attr == 'command':
+            return TaskCommand(value)
+        elif attr == 'state':
+            return TaskState(value)
+        else:
+            return value
 
     def __str__(self):
         return "Task(%s, %s, %s, %s, %s)" % (self.hash, self.command, self.state, self.progress, self.pid)
