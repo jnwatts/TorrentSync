@@ -18,7 +18,6 @@ class CreateTorrentsTable extends Migration
             $table->text('save_path');
             $table->integer('progress');
             $table->integer('total_wanted');
-            $table->integer('local_size');
             $table->integer('label_id')->unsigned();
             $table->date('time_added');
             $table->timestamps();

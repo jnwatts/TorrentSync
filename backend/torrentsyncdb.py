@@ -61,11 +61,11 @@ class TorrentSyncDb:
             if (len(torrent['label']) == 0):
                 torrent['label'] = 'unlabeled'
             sql = """REPLACE INTO `torrents` (
-                    `hash`, `name`, `save_path`, `progress`, `label_id`, `time_added`, `updated_at`, `total_wanted`, `local_size`
+                    `hash`, `name`, `save_path`, `progress`, `label_id`, `time_added`, `updated_at`, `total_wanted`
                 ) VALUES (
-                    %s, %s, %s, %s, (SELECT `id` FROM `labels` WHERE `label` = %s), %s, NOW(), %s, %s
+                    %s, %s, %s, %s, (SELECT `id` FROM `labels` WHERE `label` = %s), %s, NOW(), %s
                 )"""
-            cur.execute(sql, (t, torrent['name'], torrent['save_path'], torrent['progress'], torrent['label'], datetime.datetime.fromtimestamp(torrent['time_added']), torrent['total_wanted'], torrent['local_size']))
+            cur.execute(sql, (t, torrent['name'], torrent['save_path'], torrent['progress'], torrent['label'], datetime.datetime.fromtimestamp(torrent['time_added']), torrent['total_wanted']))
         db.commit()
 
         sql = 'DELETE FROM `torrents` WHERE `updated_at` < %s'
@@ -94,7 +94,7 @@ class TorrentSyncDb:
         db = self.get_db()
         cur = db.cursor(dictionary=True)
 
-        sql = """SELECT `id`, `hash`, `command`+0 AS `command`, `state`+0 AS `state`, `pid`
+        sql = """SELECT `id`, `hash`, `command`+0 AS `command`, `state`+0 AS `state`, `pid`, `progress`, `updated_at`
                     FROM `tasks`
                     WHERE `state` != 'complete'
                     ORDER BY `created_at` ASC LIMIT 1"""
@@ -167,7 +167,7 @@ class Task:
         db.close()
 
     def __str__(self):
-        return "Task(%s, %s, %s, %s)" % (self.hash, self.command, self.state, self.pid)
+        return "Task(%s, %s, %s, %s, %s)" % (self.hash, self.command, self.state, self.progress, self.pid)
 
 class TaskState(IntEnum):
     init = 1

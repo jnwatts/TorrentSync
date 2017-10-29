@@ -167,7 +167,7 @@ function populateTorrent(t) {
     };
 
     addField('name', t.name);
-    addField('progress', t.progress + "% / " + parseInt(t.local_size / t.total_wanted * 100.0) + "%");
+    addField('progress', t.progress + "% / " + (t.task ? t.task.progress : 0) + "%");
     addField('progress', filesize(t.total_wanted));
     addField('time_added', t.time_added);
     addField('label', t.label.label);
