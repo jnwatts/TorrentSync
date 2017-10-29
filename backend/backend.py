@@ -23,13 +23,14 @@ class Backend:
         self.procs = {}
         self.last_check = time.time()
         self.stopTimeout = None
+        self.current_task = None
         Backend.instance = self
 
     def cleanup(self):
         if self.stopTimeout:
             self.stopTimeout.set()
 
-    @setInterval(10)
+    @setInterval(45)
     def timeout(self):
         self.check_tasks()
 
@@ -38,6 +39,7 @@ class Backend:
         if not self:
             self = Backend.instance
         if self:
+            print('Signaled');
             self.check_tasks()
         return True
 
@@ -46,26 +48,35 @@ class Backend:
         self.app = Flask(__name__)
         self.app.register_blueprint(api.as_blueprint())
         self.app.run(**self.params['rpc'])
-        
+
     def check_tasks(self):
         if time.time() - self.last_check < self.params['min_interval']:
             return
         self.last_check = time.time()
-        task = self.torrentsyncdb.oldest_task()
+
+        task = self.current_task
+        if task is None:
+            task = self.torrentsyncdb.oldest_task()
+
         if task:
+            self.current_task = task
             if task.hash == "refresh":
-                task.set_state(TaskState.syncing)
+                task.state = TaskState.syncing
                 self.refresh_torrents()
-                task.set_state(TaskState.complete)
-                self.current_task = None
+                task.state = TaskState.complete
             else:
                 self.check_task(task)
 
+            if task.state == TaskState.complete:
+                self.current_task = None
+
     def refresh_torrents(self):
+        Log('Syncronizing labels')
         labels = self.deluge.labels()
         labels = [v for v in labels if v not in self.params['ignored_labels']]
         self.torrentsyncdb.set_labels(labels)
 
+        Log('Synchronizing torrents')
         torrents = self.deluge.torrents()
         torrents = {k:v for (k,v) in torrents.items() if v['label'] not in self.params['ignored_labels']}
         if self.params['debug']['enabled']:
@@ -74,9 +85,6 @@ class Backend:
                     torrents[k] = v
                 except Exception as e:
                     Log('Debug task failed %s' % e.args);
-
-        for (h,t) in torrents.items():
-            t['local_size'] = self.get_local_size(self.get_local_path(t['name']))
 
         self.torrentsyncdb.update_torrents(torrents)
 
@@ -92,49 +100,45 @@ class Backend:
         return size
 
     def check_task(self, task):
-        old_state = task.state
+        old_updated = task.updated_at
+
         if task.state == TaskState.init:
             if task.command == TaskCommand.start:
                 try:
-                    pid = self.spawn_rsync(task.hash)
-                    task.set_pid(pid)
-                    task.set_state(TaskState.syncing)
+                    self.spawn_rsync(task)
+                    task.state = TaskState.syncing
                 except Exception as e:
-                    #TODO: Completion with error message?
+                    #TODO: Store exception in task table
                     Log('Failed to spawn task: %s' % e.args)
-                    task.set_state(TaskState.complete)
+                    task.state = TaskState.complete
             else:
-                task.set_state(TaskState.complete)
+                task.state = TaskState.complete
         elif task.state == TaskState.syncing:
             # Update local size
             torrent = self.torrentsyncdb.get_torrent(task.hash)
-            torrent.local_size = self.get_local_size(self.get_local_path(torrent.name))
 
-            is_alive = False
+            complete = True
             if task.pid in self.procs:
-                p = self.procs[task.pid]
-                if p.poll() is None:
-                    is_alive = True
-            if task.command == TaskCommand.stop and is_alive:
-                os.kill(task.pid, signal.SIGINT)
-                is_alive = False
-            if not is_alive:
-                task.set_state(TaskState.complete)
+                rsync = self.procs[task.pid]
+                if task.progress != rsync.progress:
+                    task.progress = rsync.progress
+                complete = rsync.done()
+                if task.command == TaskCommand.stop and is_alive:
+                    rsync.kill()
+
+            if complete:
+                task.state = TaskState.complete
                 if task.pid in self.procs:
                     del self.procs[task.pid]
 
-    def spawn_rsync(self, hash):
-        if len(hash) > 10:
-            torrent = self.torrentsyncdb.get_torrent(hash)
-            rsync_params = self.params['rsync']
-            src = "%s:'%s/%s'" % (rsync_params['remote_host'], torrent.save_path, torrent.name)
-            dst = "%s" % (rsync_params['local_dst'])
-            args = ['rsync', '-av', src, dst]
-            Log(args)
-        else:
-            # Debug task
-            args = ['sleep', self.params['debug']['tasks'][hash]['duration']]
-        p = Popen(args)
-        self.procs[p.pid] = p
-        return p.pid
+        if task.updated_at != old_updated:
+            Log(task)
 
+    def spawn_rsync(self, task):
+        torrent = self.torrentsyncdb.get_torrent(task.hash)
+        rsync_params = self.params['rsync']
+        src = "%s:'%s/%s'" % (rsync_params['remote_host'], torrent.save_path, torrent.name)
+        dst = "%s" % (rsync_params['local_dst'])
+        rsync = Rsync(src, dst)
+        self.procs[rsync.proc.pid] = rsync
+        task.pid = rsync.proc.pid

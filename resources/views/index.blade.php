@@ -299,6 +299,8 @@ $(function () {
         <ul>
             <li>UI
                 <ul>
+                    <li>Maybe replace PHP backend with NodeJS?</li>
+                    <li>Maybe replace EventSource with WebSocket?</li>
                     <li>Show current state: size of local vs expected size</li>
                     <li>Table sorting</li>
                     <li>Save sort order in cookies</li>
