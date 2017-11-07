@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>TorrentSync</title>
+
+        <!-- CSS And JavaScript -->
+        <link rel="stylesheet" href="css/bootstrap.css" />
+        <script type="text/javascript" src="js/jquery.js"></script>
+        <script type="text/javascript" src="js/bootstrap.js"></script>
+        <script type="text/javascript" src="js/filesize.js"></script>
+        <script type="text/javascript" src="js/url-parse.js"></script>
+        <script type="text/javascript" src="js/jsonrpc.js"></script>
+        <script type="text/javascript" src="js/app.js"></script>
+
+        <style>
+            .glyphicon.spinning {
+                animation: spin 1s infinite linear;
+                -webkit-animation: spin2 1s infinite linear;
+            }
+
+            @keyframes  spin {
+                from { transform: scale(1) rotate(0deg); }
+                to { transform: scale(1) rotate(360deg); }
+            }
+
+            @-webkit-keyframes spin2 {
+                from { -webkit-transform: rotate(0deg); }
+                to { -webkit-transform: rotate(360deg); }
+            }
+
+            .task-table th, .task-progress, .task-size, .task-added, .task-label {
+                white-space: nowrap;
+            }
+
+            .task-size {
+                text-align: right;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+
+<br>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        Torrents
+        <a class="btn" role="button" id="refresh" href="#torrent.refresh">
+            <span class="glyphicon glyphicon-refresh"></span>
+        </a>
+        <div class="dropdown" style="display:inline" id="labels">
+            <button class="btn dropdown-toggle" type="button" data-toggle="dropdown">
+                <span id="labels-current"></span>
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" id="labels-list">
+            </ul>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        <table class="table table-striped task-table">
+            <!-- Table Headings -->
+            <thead>
+                <th>Name</th>
+                <th>Progress (R/L)</th>
+                <th>Size</th>
+                <th>Time Added</th>
+                <th>Label</th>
+                <th>&nbsp;</th>
+            </thead>
+
+            <!-- Table Body -->
+            <tbody id="torrents">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+        </div>
+    </body>
+</html>

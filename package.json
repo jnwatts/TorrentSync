@@ -1,13 +1,29 @@
 {
-  "private": true,
+  "name": "TorrentSync",
+  "version": "0.0.1",
+  "description": "Javascript frontend and Python backend which reads the list of completed torrents from a Deluge daemon and allows the user to invoke rsync for any given entry.",
+  "main": "src/html/index.html",
+  "repository": "http://github.com/jnwatts/TorrentSync/",
+  "author": "Josh Watts <josh+github@sroz.net>",
+  "license": "MIT",
+  "keywords": [
+    "deluge",
+    "rsync",
+    "php",
+    "javascript",
+    "python"
+  ],
   "devDependencies": {
-    "gulp": "^3.8.8"
+    "gulp": "^3.9.1",
+    "mysql": "^2.15.0",
+    "sequelize": "3",
+    "sequelize-cli": "^3.0.0"
   },
   "dependencies": {
-    "bootstrap-sass": "^3.0.0",
+    "bootstrap": "^3.3.7",
+    "gulp-jsmin": "^0.1.5",
+    "jquery": "^3.2.1",
     "jsonrpc-lite": "^1.3.0",
-    "laravel-elixir": "^4.0.0",
-    "websocket-as-promised": "^0.6.0",
-    "yarn": "^1.2.1"
+    "url-parse": "^1.2.0"
   }
 }

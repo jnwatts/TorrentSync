@@ -1,25 +1,39 @@
-var elixir = require('laravel-elixir');
+var gulp = require('gulp');
+var jsmin = require('gulp-jsmin');
 
-/*
- |--------------------------------------------------------------------------
- | Elixir Asset Management
- |--------------------------------------------------------------------------
- |
- | Elixir provides a clean, fluent API for defining some basic Gulp tasks
- | for your Laravel application. By default, we are compiling the Sass
- | file for our application, as well as publishing vendor resources.
- |
- */
+gulp.task('html', function() {
+	return gulp.src('src/html/index.html')
+		.pipe(gulp.dest('public'));
+});
 
-elixir(function(mix) {
-    var bowerPath = 'vendor/bower_dl';
-    var jqueryPath = bowerPath + '/jquery/dist';
-    var bootstrapPath = 'node_modules/bootstrap-sass/assets';
-    var jsonrpcPath = 'node_modules/jsonrpc-lite';
-    mix.sass('app.scss')
-        .copy(bootstrapPath + '/fonts', 'public/fonts')
-        .copy(bootstrapPath + '/javascripts/bootstrap.min.js', 'public/js')
-        .copy(jqueryPath + '/jquery.js', 'public/js')
-        .copy(jsonrpcPath + '/jsonrpc.js', 'public/js')
-        .copy(bowerPath + '/filesize/lib/filesize.js', 'public/js');
+gulp.task('js', function() {
+	return gulp.src([
+			'src/js/*.js',
+			'node_modules/jquery/dist/jquery.js',
+			'node_modules/bootstrap/dist/js/bootstrap.js',
+			'node_modules/jsonrpc-lite/jsonrpc.js',
+			'node_modules/url-parse/dist/url-parse.js',
+			])
+		.pipe(jsmin())
+		.pipe(gulp.dest('public/js'));
+});
+
+gulp.task('css', function() {
+	return gulp.src([
+			'src/css/*.css',
+			'node_modules/bootstrap/dist/css/bootstrap.css'
+			])
+		.pipe(gulp.dest('public/css'));
+});
+
+gulp.task('fonts', function() {
+	return gulp.src([
+			'node_modules/bootstrap/dist/fonts/*'
+			])
+		.pipe(gulp.dest('public/fonts'));
+});
+
+gulp.task('default', ['html', 'js', 'css', 'fonts']);
+gulp.task('watch', ['default'], function() {
+	gulp.watch('src/**/*.*', ['default']);
 });

@@ -3,6 +3,7 @@ from .deluge import Deluge
 from .torrentsyncdb import TorrentSyncDb, Task, TaskState, TaskCommand
 from .log import Log
 from .rsync import Rsync
+from .server import Server
 import logging
 from flask import Flask
 from jsonrpc.backend.flask import api
@@ -10,6 +11,10 @@ import os
 import signal
 from subprocess import Popen
 import time
+import asyncio
+import websockets
+from jsonrpcserver.aio import methods
+from jsonrpcserver.response import NotificationResponse
 
 logging.disable(logging.ERROR)
 
@@ -22,34 +27,36 @@ class Backend:
         self.torrentsyncdb = TorrentSyncDb(**params['torrentsyncdb'])
         self.procs = {}
         self.last_check = time.time()
-        self.stopTimeout = None
+        self.update_task = None
         self.current_task = None
+
         Backend.instance = self
 
     def cleanup(self):
-        if self.stopTimeout:
-            self.stopTimeout.set()
+        if self.update_task:
+            self.update_task.cancel()
 
-    @setInterval(45)
-    def timeout(self):
-        self.check_tasks()
-
-    @api.dispatcher.add_method
-    def signal(self = None):
-        if not self:
-            self = Backend.instance
-        if self:
-            print('Signaled');
-            self.check_tasks()
-        return True
+    async def update_task_func(self):
+        while True:
+            time_since_check = time.time() - self.last_check
+            if time_since_check > self.params['min_interval']:
+                try:
+                    await self.check_tasks()
+                except Exception as e:
+                    print(e)
+            await asyncio.sleep(time_since_check % self.params['min_interval'])
 
     def run(self):
-        self.stopTimeout = self.timeout()
-        self.app = Flask(__name__)
-        self.app.register_blueprint(api.as_blueprint())
-        self.app.run(**self.params['rpc'])
+        # self.stopTimeout = self.timeout()
+        print('Starting update task')
+        self.update_task = asyncio.Task(self.update_task_func())
+        print('Starting websocket')
+        self.server = Server(self)
+        asyncio.get_event_loop().run_until_complete(self.server.run('127.0.0.1', 9000))
+        print('Enter main loop')
+        asyncio.get_event_loop().run_forever()
 
-    def check_tasks(self):
+    async def check_tasks(self):
         if time.time() - self.last_check < self.params['min_interval']:
             return
         self.last_check = time.time()
@@ -65,12 +72,12 @@ class Backend:
                 self.refresh_torrents()
                 task.state = TaskState.complete
             else:
-                self.check_task(task)
+                await self.check_task(task)
 
             if task.state == TaskState.complete:
                 self.current_task = None
 
-    def refresh_torrents(self):
+    async def refresh_torrents(self):
         Log('Syncronizing labels')
         labels = self.deluge.labels()
         labels = [v for v in labels if v not in self.params['ignored_labels']]
@@ -88,6 +95,11 @@ class Backend:
 
         self.torrentsyncdb.update_torrents(torrents)
 
+        await self.server.set_state(self.torrentsyncdb.get_torrents_by_label())
+
+    def log(self, msg, *args):
+        Log(msg, *args)
+
     def get_local_path(self, name):
         return "%s/%s" % (self.params['rsync']['local_dst'], name)
 
@@ -99,7 +111,22 @@ class Backend:
                 size += sum([e.stat().st_size for e in os.scandir(path) if not e.is_dir()])
         return size
 
-    def check_task(self, task):
+    async def get_torrent(self, hash):
+        # delete matching tasks w/ state == complete
+        self.torrentsyncdb.clear_completed_tasks(hash)
+
+        # look for task w/ state != complete
+        task = self.torrentsyncdb.get_incomplete_task(hash)
+        if task:
+            # TODO: return busy, throw exception, return error?
+            print("Task is busy", task)
+            return None
+        else:
+            # start task
+            self.torrentsyncdb.start_task(hash)
+            await self.check_tasks()
+
+    async def check_task(self, task):
         old_updated = task.updated_at
 
         if task.state == TaskState.init:
@@ -115,15 +142,13 @@ class Backend:
                 task.state = TaskState.complete
         elif task.state == TaskState.syncing:
             # Update local size
-            torrent = self.torrentsyncdb.get_torrent(task.hash)
-
             complete = True
             if task.pid in self.procs:
                 rsync = self.procs[task.pid]
                 if task.progress != rsync.progress:
                     task.progress = rsync.progress
                 complete = rsync.done()
-                if task.command == TaskCommand.stop and is_alive:
+                if task.command == TaskCommand.stop:
                     rsync.kill()
 
             if complete:
@@ -133,6 +158,7 @@ class Backend:
 
         if task.updated_at != old_updated:
             Log(task)
+            await self.server.update_task([task])
 
     def spawn_rsync(self, task):
         torrent = self.torrentsyncdb.get_torrent(task.hash)

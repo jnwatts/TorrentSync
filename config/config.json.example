@@ -1,0 +1,23 @@
+{
+  "development": {
+    "dialect":   "mysql",
+    "host":     "localhost",
+    "database": "torrentsync",
+    "username": "torrentsync",
+    "password": "password"
+  },
+  "test": {
+    "dialect":   "mysql",
+    "host":     "localhost",
+    "database": "torrentsync",
+    "username": "torrentsync",
+    "password": "password"
+  },
+  "production": {
+    "dialect":   "mysql",
+    "host":     "localhost",
+    "database": "torrentsync",
+    "username": "torrentsync",
+    "password": "password"
+  }
+}
