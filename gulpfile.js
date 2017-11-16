@@ -13,6 +13,7 @@ gulp.task('js', function() {
 			'node_modules/bootstrap/dist/js/bootstrap.js',
 			'node_modules/jsonrpc-lite/jsonrpc.js',
 			'node_modules/url-parse/dist/url-parse.js',
+			'node_modules/moment/moment.js',
 			])
 		.pipe(jsmin())
 		.pipe(gulp.dest('public/js'));

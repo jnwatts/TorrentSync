@@ -1,6 +1,6 @@
 ## TorrentSync
 
-PHP web UI + Python backend which reads the list of completed torrents from a Deluge daemon and allows the user to invoke rsync for a given entry
+Javscript frontend + Qt5 backend which uses info from a remote instance of Deluge to allow the user to invoke and track rsync transfers.
 
 ### License
 
