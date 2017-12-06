@@ -11,7 +11,7 @@ void Tasks::insert(Task *t)
 {
     if (!this->_tasks[t->hash]) {
         this->_tasks[t->hash] = t;
-        connect(t, &Task::destroyed, this, &Tasks::taskDestroyed);
+        t->setParent(this);
         connect(t, &Task::progressChanged, this, &Tasks::checkQueue);
         connect(t, &Task::stateChanged, this, &Tasks::checkQueue);
     }
@@ -25,16 +25,30 @@ void Tasks::enqueue(Task *t)
     QTimer::singleShot(0, this, &Tasks::checkQueue);
 }
 
-#include <QDebug>
 void Tasks::filter(QStringList &hashes)
 {
-    foreach (auto t, this->_tasks) {
-        if (t && !hashes.contains(t->hash)) {
-            qDebug() << "Deleting" << *t;
+    QMutableHashIterator<QString, Task*> iter(this->_tasks);
+    while (iter.hasNext()) {
+        auto i = iter.next();
+        auto &h = i.key();
+        Task *t = i.value();
+        if (t != nullptr && !hashes.contains(h)) {
+            iter.remove();
+            this->_queue.removeAll(t);
             t->abort();
             t->deleteLater();
         }
     }
+    QTimer::singleShot(0, this, &Tasks::checkQueue);
+}
+
+void Tasks::destroy(Task *t)
+{
+    this->_tasks.remove(t->hash);
+    this->_queue.removeAll(t);
+    t->abort();
+    t->deleteLater();
+    QTimer::singleShot(0, this, &Tasks::checkQueue);
 }
 
 Task *Tasks::active(void)
@@ -69,12 +83,4 @@ void Tasks::checkQueue(void)
             break;
         }
     }
-}
-
-void Tasks::taskDestroyed(void)
-{
-    auto t = qobject_cast<Task*>(QObject::sender());
-    this->_tasks.remove(t->hash);
-    this->_queue.removeAll(t);
-    QTimer::singleShot(0, this, &Tasks::checkQueue);
 }

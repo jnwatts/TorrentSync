@@ -15,6 +15,7 @@ public:
     void insert(Task *t);
     void enqueue(Task *t);
     void filter(QStringList &hashes);
+    void destroy(Task *t);
 
     Task *active(void);
 
@@ -24,7 +25,6 @@ public:
 
 private slots:
     void checkQueue(void);
-    void taskDestroyed(void);
 
 private:
     TaskPtrHash _tasks;
