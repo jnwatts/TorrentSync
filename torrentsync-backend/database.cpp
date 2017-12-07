@@ -21,7 +21,7 @@ void Database::open(QJsonObject config)
 
 Task::State Database::getState(QString hash)
 {
-    auto query = QSqlQuery(this->_db);
+    auto query = QSqlQuery(this->db());
     query.prepare("SELECT state FROM tasks WHERE hash = :hash");
     query.bindValue(":hash", hash);
     if (this->exec(query)) {
@@ -33,7 +33,7 @@ Task::State Database::getState(QString hash)
 
 TaskStateHash Database::getStates(QStringList hashes)
 {
-    auto query = QSqlQuery(this->_db);
+    auto query = QSqlQuery(this->db());
     QHash<QString, Task::State> states;
     query.prepare("SELECT hash, state FROM tasks WHERE hash IN (:hashes)");
     this->bindHashes(query, hashes);
@@ -53,7 +53,7 @@ void Database::stateChanged(void)
 
 void Database::setState(QString hash, Task::State state)
 {
-    auto query = QSqlQuery(this->_db);
+    auto query = QSqlQuery(this->db());
     query.prepare("REPLACE INTO tasks (hash, state) VALUES (:hash, :state)");
     query.bindValue(":hash", hash);
     query.bindValue(":state", state);
@@ -62,7 +62,7 @@ void Database::setState(QString hash, Task::State state)
 
 void Database::filter(QStringList &hashes)
 {
-    auto query = QSqlQuery(this->_db);
+    auto query = QSqlQuery(this->db());
     query.exec("DELETE FROM tasks WHERE hash NOT IN (:hashes)");
     this->bindHashes(query, hashes);
     this->exec(query);
@@ -98,4 +98,12 @@ void Database::bindHashes(QSqlQuery &query, QStringList &hashes)
     for (auto iter = placeHolders.begin(); iter != placeHolders.end(); iter++) {
         query.bindValue(iter.key(), iter.value());
     }
+}
+
+QSqlDatabase &Database::db()
+{
+    auto &db = this->_db;
+    if (!db.isValid())
+        db.open();
+    return db;
 }

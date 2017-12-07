@@ -27,6 +27,7 @@ public slots:
 private:
     bool exec(QSqlQuery &query);
     void bindHashes(QSqlQuery &query, QStringList &hashes);
+    QSqlDatabase &db(void);
 
     QSqlDatabase _db;
 };
