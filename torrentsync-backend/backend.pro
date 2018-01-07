@@ -10,7 +10,6 @@ CONFIG   += c++14
 TARGET = torrentsync-backend
 TEMPLATE = app
 
-
 SOURCES += main.cpp \
     deluge.cpp \
     torrent.cpp \
@@ -40,3 +39,10 @@ HEADERS  += \
     tasks.h
 
 FORMS    +=
+
+isEmpty(PREFIX) {
+ PREFIX = /usr/local
+}
+target.files = torrentsync-backend
+target.path = $$PREFIX/bin
+INSTALLS += target
