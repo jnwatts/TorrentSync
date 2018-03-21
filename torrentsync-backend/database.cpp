@@ -63,7 +63,7 @@ void Database::setState(QString hash, Task::State state)
 void Database::filter(QStringList &hashes)
 {
     auto query = QSqlQuery(this->db());
-    query.exec("DELETE FROM tasks WHERE hash NOT IN (:hashes)");
+    query.prepare("DELETE FROM tasks WHERE hash NOT IN (:hashes)");
     this->bindHashes(query, hashes);
     this->exec(query);
 }
