@@ -8,15 +8,9 @@ Database::Database(QObject *parent) : QObject(parent)
 {
 }
 
-void Database::open(QJsonObject config)
+void Database::setConfig(QJsonObject config)
 {
-    this->_db = QSqlDatabase::addDatabase(config["qsql_driver"].toString().toUpper());
-    this->_db.setUserName(config["username"].toString());
-    this->_db.setPassword(config["password"].toString());
-    this->_db.setDatabaseName(config["database"].toString());
-    this->_db.setHostName(config["host"].toString());
-    if (!this->_db.open())
-        qFatal("Failed to open database: %s", qPrintable(this->_db.lastError().text()));
+    this->_config = config;
 }
 
 Task::State Database::getState(QString hash)
@@ -103,7 +97,29 @@ void Database::bindHashes(QSqlQuery &query, QStringList &hashes)
 QSqlDatabase &Database::db()
 {
     auto &db = this->_db;
-    if (!db.isValid())
-        db.open();
+    auto &config = this->_config;
+
+    if (db.isOpen()) {
+        auto query = QSqlQuery(db);
+        if (!query.exec("SELECT 1;")) {
+            query.clear();
+            db.close();
+            QString connectionName = db.connectionName();
+            db = QSqlDatabase();
+            QSqlDatabase::removeDatabase(connectionName);
+        }
+    } else {
+    }
+
+    if (!db.isOpen()) {
+        db = QSqlDatabase::addDatabase(config["qsql_driver"].toString().toUpper());
+        db.setUserName(config["username"].toString());
+        db.setPassword(config["password"].toString());
+        db.setDatabaseName(config["database"].toString());
+        db.setHostName(config["host"].toString());
+        if (!db.open())
+            qFatal("Failed to open database: %s", qPrintable(db.lastError().text()));
+    }
+
     return db;
 }

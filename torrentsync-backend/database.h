@@ -14,7 +14,7 @@ class Database : public QObject
 public:
     explicit Database(QObject *parent = nullptr);
 
-    void open(QJsonObject config);
+    void setConfig(QJsonObject config);
 
     Task::State getState(QString hash);
     TaskStateHash getStates(QStringList hashes);
@@ -30,6 +30,7 @@ private:
     QSqlDatabase &db(void);
 
     QSqlDatabase _db;
+    QJsonObject _config;
 };
 
 #endif // DATABASE_H
