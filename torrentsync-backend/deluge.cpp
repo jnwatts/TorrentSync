@@ -27,55 +27,43 @@ Deluge::~Deluge()
     delete this->mgr;
 }
 
-void Deluge::labels(std::function<void(QStringList)> complete)
+void Deluge::labels(std::function<void(QStringList)> success, std::function<void(DelugeError)> failure)
 {
-    this->invoke("label.get_labels", {}, [complete](QJsonObject response) {
-        if (response.contains("result")) {
-            auto json_labels = response["result"].toArray();
-            QStringList labels;
-            labels << "unlabeled";
-            foreach (auto label, json_labels) {
-                QString l = label.toString();
-                labels << l;
-            }
-            complete(labels);
-        } else {
-            complete({});
+    this->invoke("label.get_labels", {}, [success](QJsonValue result) {
+        auto json_labels = result.toArray();
+        QStringList labels;
+        labels << "unlabeled";
+        foreach (auto label, json_labels) {
+            QString l = label.toString();
+            labels << l;
         }
-    });
+        success(labels);
+    }, failure);
 }
 
-void Deluge::torrents(std::function<void(TorrentHash)> complete)
+void Deluge::torrents(std::function<void(TorrentHash)> success, std::function<void(DelugeError)> failure)
 {
-    this->invoke("core.get_torrents_status", {QVariantList({}), QVariantList({"name", "save_path", "progress", "label", "time_added", "total_wanted"})}, [complete](QJsonObject response) {
-        if (response.contains("result")) {
-            auto json_torrents = response["result"].toObject();
-            TorrentHash torrents;
-            foreach (auto k, json_torrents.keys()) {
-                auto t = Torrent::fromJson(json_torrents[k].toObject());
-                t.hash = k;
-                torrents[k] = t;
-            }
-            complete(torrents);
-
-        } else {
-            complete({});
+    this->invoke("core.get_torrents_status", {QVariantList({}), QVariantList({"name", "save_path", "progress", "label", "time_added", "total_wanted"})}, [success](QJsonValue result) {
+        auto json_torrents = result.toObject();
+        TorrentHash torrents;
+        foreach (auto k, json_torrents.keys()) {
+            auto t = Torrent::fromJson(json_torrents[k].toObject());
+            t.hash = k;
+            torrents[k] = t;
         }
-    });
+        success(torrents);
+    }, failure);
 }
 
-void Deluge::auth(std::function<void (bool)> complete)
+void Deluge::auth(std::function<void (bool)> success, std::function<void(DelugeError)> failure)
 {
-    this->invoke("auth.login", {this->password}, [complete](QJsonObject response) {
-        if (response.contains("result")) {
-            complete(response["result"].toBool());
-        } else {
-            complete(false);
-        }
-    });
+    //TODO: Move this above to be in order...
+    this->invoke("auth.login", {this->password}, [success](QJsonValue result) {
+        success(result.toBool());
+    }, failure);
 }
 
-void Deluge::invoke(QString method, QVariantList params, std::function<void (QJsonObject)> response)
+void Deluge::invoke(QString method, QVariantList params, std::function<void (QJsonValue)> success, std::function<void (DelugeError)> failure)
 {
     auto request = QNetworkRequest(this->url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -84,17 +72,37 @@ void Deluge::invoke(QString method, QVariantList params, std::function<void (QJs
     if (this->debug)
         qDebug() << "Deluge <-" << qPrintable(data);
     auto reply = this->mgr->post(request, data.toUtf8());
-    connect(reply, &QNetworkReply::finished, [this, reply, response]() {
+    connect(reply, &QNetworkReply::finished, [this, reply, success, failure]() {
         auto data = reply->readAll();
         if (this->debug)
             qDebug() << "Deluge ->" << qPrintable(data);
         auto obj = QJsonDocument::fromJson(data).object();
-        if (response)
-            response(obj);
+        QJsonValue result, error;
+
+        if (obj.contains("error"))
+            error = obj["error"];
+
+        if (obj.contains("result"))
+            result = obj["result"];
+
+        if (error.isObject()) {
+            qWarning() << "Error:" << qPrintable(QString::fromUtf8(QJsonDocument(error.toObject()).toJson()).simplified());
+            if (failure)
+                failure(error);
+        } else if (!result.isNull()) {
+            if (success)
+                success(result);
+        } else {
+            qWarning() << "Error: response contains neither error nor result fields:" << qPrintable(QString::fromUtf8(QJsonDocument(obj).toJson()).simplified());
+            if (failure)
+                failure({-1, "Malformed response"});
+        }
+
     });
-    connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), [this, reply, response](QNetworkReply::NetworkError error) {
+    connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), [this, reply, failure](QNetworkReply::NetworkError error) {
         qWarning() << "Error:" << error;
-        response(QJsonObject());
+        if (failure)
+            failure({-1, "Network error"});
     });
 }
 

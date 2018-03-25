@@ -7,6 +7,7 @@
 #include <QVariantList>
 #include <functional>
 
+#include "delugeerror.h"
 #include "torrent.h"
 
 class QNetworkAccessManager;
@@ -21,9 +22,9 @@ public:
     void setHttpAuth(QString user, QString pass) { this->http_user = user; this->http_pass = pass; }
     void setDebug(bool debug) { this->debug = debug; }
 
-    void auth(std::function<void(bool)> complete);
-    void labels(std::function<void(QStringList)> complete);
-    void torrents(std::function<void(TorrentHash)> complete);
+    void auth(std::function<void(bool)> success, std::function<void(DelugeError)> failure = nullptr);
+    void labels(std::function<void(QStringList)> success, std::function<void(DelugeError)> failure = nullptr);
+    void torrents(std::function<void(TorrentHash)> success, std::function<void(DelugeError)> failure = nullptr);
 
 signals:
 
@@ -31,7 +32,7 @@ signals:
 public slots:
 
 private:
-    void invoke(QString method, QVariantList params = {}, std::function<void(QJsonObject)> response = nullptr);
+    void invoke(QString method, QVariantList params, std::function<void (QJsonValue)> success = nullptr, std::function<void (DelugeError)> failure = nullptr);
 
     bool debug;
     bool authenticated;
