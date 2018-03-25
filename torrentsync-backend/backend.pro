@@ -12,6 +12,7 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     deluge.cpp \
+    delugeerror.cpp \
     torrent.cpp \
     torrentsync.cpp \
     client.cpp \
@@ -26,6 +27,7 @@ SOURCES += main.cpp \
 
 HEADERS  += \
     deluge.h \
+    delugeerror.h \
     torrent.h \
     torrentsync.h \
     client.h \
