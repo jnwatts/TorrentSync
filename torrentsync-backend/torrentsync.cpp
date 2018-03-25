@@ -68,24 +68,33 @@ void TorrentSync::updateDeluge()
     this->_fetchingTorrents = true;
     this->_mutex.unlock();
 
+    auto updateRefreshing = [this](void) {
+        QJsonObject coreUpdate;
 
-    QJsonObject coreUpdate;
-    coreUpdate["refreshing"] = true;
-    this->_server->notifyClients(JsonRpc::Notification("core.update", coreUpdate));
+        this->_mutex.lock();
+        coreUpdate["refreshing"] = (this->_fetchingLabels || this->_fetchingTorrents);
+        this->_server->notifyClients(JsonRpc::Notification("core.update", coreUpdate));
+        this->_mutex.unlock();
+    };
+    updateRefreshing();
 
-    this->_deluge->auth([this](bool complete) {
+    this->_deluge->auth([this, updateRefreshing](bool complete) {
         if (complete) {
-            this->_deluge->labels([this](QStringList labels) {
+            this->_deluge->labels([this, updateRefreshing](QStringList labels) {
                 this->labels = labels;
                 this->_server->notifyClients(JsonRpc::Notification("labels.update", QJsonArray::fromStringList(this->labels)));
-                this->_mutex.lock();
                 this->_fetchingLabels = false;
-                this->_mutex.unlock();
+                updateRefreshing();
+            }, [this, updateRefreshing](DelugeError error) {
+                Q_UNUSED(error);
+                this->_fetchingLabels = false;
+                updateRefreshing();
             });
-            this->_deluge->torrents([this](TorrentHash torrents) {
-                this->torrents = torrents;
+            this->_deluge->torrents([this, updateRefreshing](TorrentHash torrents) {
+                if (torrents.size() > 0)
+                    this->torrents = torrents;
 
-                QStringList hashes = torrents.keys();
+                QStringList hashes = this->torrents.keys();
                 this->_tasks.filter(hashes);
                 this->_database.filter(hashes);
                 this->updateTasks(hashes);
@@ -93,13 +102,12 @@ void TorrentSync::updateDeluge()
                 this->updateClientTorrents(this->_clientState);
                 this->updateClientTasks(this->_clientState);
 
-                QJsonObject coreUpdate;
-                coreUpdate["refreshing"] = false;
-                this->_server->notifyClients(JsonRpc::Notification("core.update", coreUpdate));
-
-                this->_mutex.lock();
                 this->_fetchingTorrents = false;
-                this->_mutex.unlock();
+                updateRefreshing();
+            }, [this, updateRefreshing](DelugeError error) {
+                Q_UNUSED(error);
+                this->_fetchingTorrents = false;
+                updateRefreshing();
             });
         }
     });
