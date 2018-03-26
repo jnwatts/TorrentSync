@@ -391,6 +391,9 @@
                 updateTasks(new Map(Object.entries(e.params)));
             } else if (e.method == 'core.update') {
                 updateCore(e.params);
+            } else if (e.method == 'core.message') {
+                //TODO: Banner critical & warning messages
+                console.log(e.params);
             } else if (e.method == 'debug.queue') {
                 $('#debug_queue').text(JSON.stringify(e.params,null,'  '));
             } else {
