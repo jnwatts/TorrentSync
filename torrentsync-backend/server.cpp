@@ -1,5 +1,8 @@
 #include <QtWebSockets/QWebSocket>
 #include <QtWebSockets/QWebSocketServer>
+
+#include "debug.h"
+
 #include "server.h"
 
 Server::Server(QString address, int port, QObject *parent) : QObject(parent),
@@ -11,7 +14,7 @@ Server::Server(QString address, int port, QObject *parent) : QObject(parent),
         this->_server->deleteLater();
         this->_server = nullptr;
     } else {
-        qDebug("Listening on %s:%d", qPrintable(address), port);
+        qCDebug(SERVER, "Listening on %s:%d", qPrintable(address), port);
     }
 
     connect(this->_server, &QWebSocketServer::newConnection, this, &Server::newConnection);

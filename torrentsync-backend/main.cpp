@@ -3,6 +3,9 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <signal.h>
+
+#include "debug.h"
+
 #include "torrentsync.h"
 #include "types.h"
 

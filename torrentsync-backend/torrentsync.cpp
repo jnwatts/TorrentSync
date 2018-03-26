@@ -2,6 +2,9 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <deluge.h>
+
+#include "debug.h"
+
 #include "torrentsync.h"
 #include "debugtransfer.h"
 #include "transfer.h"
@@ -60,7 +63,7 @@ void TorrentSync::updateDeluge()
     this->_mutex.lock();
     if (this->_fetchingLabels || this->_fetchingLabels) {
         if (!this->_updating.wait(&this->_mutex, 5 * 1000)) {
-            qWarning("Timed out waiting for previous update");
+            qCWarning(TS, "Timed out waiting for previous update");
             return;
         }
     }
@@ -139,7 +142,7 @@ void TorrentSync::initDebugTasks(void)
 
 void TorrentSync::clientConnected(Client *client)
 {
-    qDebug() << "Connect:" << *client;
+    qCDebug(CLIENT_IO) << "Connect:" << *client;
     connect(client, &Client::requestReceived, this, &TorrentSync::handleRequest);
     connect(client, &Client::disconnected, this, &TorrentSync::clientDisconnected);
     this->_clientState[client] = ClientState();
@@ -148,7 +151,7 @@ void TorrentSync::clientConnected(Client *client)
 void TorrentSync::clientDisconnected()
 {
     auto client = qobject_cast<Client*>(QObject::sender());
-    qDebug() << "Disconnect:" << *client;
+    qCDebug(CLIENT_IO) << "Disconnect:" << *client;
     this->_clientState.remove(client);
 }
 

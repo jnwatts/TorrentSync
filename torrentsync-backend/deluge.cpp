@@ -8,6 +8,8 @@
 #include <QtNetwork/QNetworkCookieJar>
 #include <QtNetwork/QNetworkCookie>
 
+#include "debug.h"
+
 #include "deluge.h"
 #include "json-rpc.h"
 
@@ -70,12 +72,12 @@ void Deluge::invoke(QString method, QVariantList params, std::function<void (QJs
     request.setRawHeader("accept", "application/json");
     auto data = (QString)JsonRpc::Request(this->id++, method, QJsonArray::fromVariantList(params));
     if (this->debug)
-        qDebug() << "Deluge <-" << qPrintable(data);
+        qCDebug(DELUGE_IO) << "Deluge <-" << qPrintable(data);
     auto reply = this->mgr->post(request, data.toUtf8());
     connect(reply, &QNetworkReply::finished, [this, reply, success, failure]() {
         auto data = reply->readAll();
         if (this->debug)
-            qDebug() << "Deluge ->" << qPrintable(data);
+            qCDebug(DELUGE_IO) << "Deluge ->" << qPrintable(data);
         auto obj = QJsonDocument::fromJson(data).object();
         QJsonValue result, error;
 
@@ -86,21 +88,21 @@ void Deluge::invoke(QString method, QVariantList params, std::function<void (QJs
             result = obj["result"];
 
         if (error.isObject()) {
-            qWarning() << "Error:" << qPrintable(QString::fromUtf8(QJsonDocument(error.toObject()).toJson()).simplified());
+            qCWarning(DELUGE) << "Error:" << qPrintable(QString::fromUtf8(QJsonDocument(error.toObject()).toJson()).simplified());
             if (failure)
                 failure(error);
         } else if (!result.isNull()) {
             if (success)
                 success(result);
         } else {
-            qWarning() << "Error: response contains neither error nor result fields:" << qPrintable(QString::fromUtf8(QJsonDocument(obj).toJson()).simplified());
+            qCWarning(DELUGE) << "Error: response contains neither error nor result fields:" << qPrintable(QString::fromUtf8(QJsonDocument(obj).toJson()).simplified());
             if (failure)
                 failure({-1, "Malformed response"});
         }
 
     });
     connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), [this, reply, failure](QNetworkReply::NetworkError error) {
-        qWarning() << "Error:" << error;
+        qCWarning(DELUGE) << "Error:" << error;
         if (failure)
             failure({-1, "Network error"});
     });

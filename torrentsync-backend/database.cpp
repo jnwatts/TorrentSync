@@ -2,6 +2,9 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlResult>
+
+#include "debug.h"
+
 #include "database.h"
 
 Database::Database(QObject *parent) : QObject(parent)
@@ -73,7 +76,7 @@ bool Database::exec(QSqlQuery &query)
             values << iter.key() + "=" + iter.value().toString();
             iter++;
         }
-        qWarning("Query failed: error=\"%s\", query=\"%s\", values={%s}",
+        qCWarning(DATABASE, "Query failed: error=\"%s\", query=\"%s\", values={%s}",
                  qPrintable(query.lastError().text()),
                  qPrintable(query.lastQuery()),
                  qPrintable(values.join(", ")));

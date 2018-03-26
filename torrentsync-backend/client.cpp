@@ -4,6 +4,8 @@
 #include <QtWebSockets/QWebSocketServer>
 #include <QtWebSockets/QWebSocket>
 
+#include "debug.h"
+
 #include "client.h"
 
 Client::Client(QWebSocket *socket, QObject *parent) : QObject(parent),
@@ -28,7 +30,7 @@ Client::operator QString() const
 
 void Client::send(JsonRpc msg)
 {
-    qDebug() << *this << "<-" << msg;
+    qCDebug(CLIENT_IO) << *this << "<-" << msg;
     this->_socket->sendTextMessage((QString)msg);
 }
 
@@ -38,11 +40,11 @@ void Client::handleTextMessage(QString msg)
     if (doc.isObject()) {
         JsonRpc request = JsonRpc::fromJson(doc.object());
         if (request.type != JsonRpc::PARSE_ERROR) {
-            qDebug() << *this << "->" << request;
+            qCDebug(CLIENT_IO) << *this << "->" << request;
             emit this->requestReceived(request);
         }
     } else
-        qWarning("Received invalid message from client"); // TODO: Unified logging
+        qCWarning(CLIENT_IO, "Received invalid message from client"); // TODO: Unified logging
 }
 
 QDebug operator<<(QDebug debug, const Client &c)
