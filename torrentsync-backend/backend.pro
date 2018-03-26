@@ -11,6 +11,7 @@ TARGET = torrentsync-backend
 TEMPLATE = app
 
 SOURCES += main.cpp \
+    debug.cpp \
     deluge.cpp \
     delugeerror.cpp \
     torrent.cpp \
