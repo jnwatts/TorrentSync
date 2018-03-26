@@ -140,6 +140,29 @@ void TorrentSync::initDebugTasks(void)
     this->updateTasks(hashes);
 }
 
+void TorrentSync::handleMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    Q_UNUSED(context);
+
+    // Skip client and deluge IO (mostly to avoid noise, and also passwords)
+    if (context.category == CLIENT_IO().categoryName())
+        return;
+    if (context.category == DELUGE_IO().categoryName())
+        return;
+
+    this->_server->notifyClients(JsonRpc::Notification("core.message", QJsonObject({
+        {"type", type},
+        {"context", QJsonObject({
+                {"category", context.category},
+                {"file", context.file},
+                {"function", context.function},
+                {"line", context.line},
+                {"version", context.version},
+        })},
+        {"text", msg},
+    })));
+}
+
 void TorrentSync::clientConnected(Client *client)
 {
     qCDebug(CLIENT_IO) << "Connect:" << *client;

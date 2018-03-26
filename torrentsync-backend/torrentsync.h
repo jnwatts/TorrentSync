@@ -34,6 +34,7 @@ public:
     void initServer(void);
     void updateDeluge(void);
     void initDebugTasks(void);
+    void handleMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
     JsonRpc getState();
 
