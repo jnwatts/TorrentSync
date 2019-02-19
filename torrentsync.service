@@ -1,0 +1,9 @@
+[Unit]
+Description=TorrentSync
+
+[Service]
+ExecStart=/usr/local/bin/torrentsync-backend --env production
+WorkingDirectory=/opt/torrents
+
+[Install]
+WantedBy=default.target
