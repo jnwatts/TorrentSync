@@ -48,7 +48,7 @@ bool Transfer::abort(void)
 
 void Transfer::outputReady(void)
 {
-    auto line = QString(this->_process->readAll()).simplified();
+    auto line = QString(this->_process->readAllStandardOutput()).simplified();
     if (_re.indexIn(line) > -1)
         this->setProgress(_re.capturedTexts().at(1).toDouble());
 }
