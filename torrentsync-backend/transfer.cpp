@@ -1,4 +1,7 @@
 #include <QProcess>
+
+#include "debug.h"
+
 #include "transfer.h"
 
 Transfer::Transfer(QString hash, QObject *parent) : Task(hash, parent),
@@ -55,5 +58,7 @@ void Transfer::outputReady(void)
 
 void Transfer::finished(int exitCode)
 {
+    if (exitCode != 0)
+        qCWarning(TRANSFER) << QString(this->_process->readAllStandardError()).simplified();
     this->finish(exitCode == 0);
 }
