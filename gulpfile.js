@@ -34,7 +34,4 @@ gulp.task('fonts', function() {
 		.pipe(gulp.dest('public/fonts'));
 });
 
-gulp.task('default', ['html', 'js', 'css', 'fonts']);
-gulp.task('watch', ['default'], function() {
-	gulp.watch('src/**/*.*', ['default']);
-});
+gulp.task('default', gulp.series('html', 'js', 'css', 'fonts'));
