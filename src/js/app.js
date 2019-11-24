@@ -7,6 +7,7 @@
     window.tasks = new Map();
 
     var Task = {
+        INIT: 'INIT',
         QUEUED: 'QUEUED',
         RUNNING: 'RUNNING',
         COMPLETE: 'COMPLETE',
@@ -228,6 +229,8 @@
             } else if (task.state == Task.FAILED) {
                 actions.append(glyph('exclamation-sign'));
                 addAction('Transfer', 'repeat', 'transfer');
+            } else {
+                addAction('Transfer', 'save', 'transfer');
             }
         } else {
             addAction('Transfer', 'save', 'transfer');
