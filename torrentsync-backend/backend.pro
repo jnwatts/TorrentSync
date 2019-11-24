@@ -7,7 +7,7 @@
 QT       += core network websockets sql
 CONFIG   += c++14
 
-TARGET = torrentsync-backend
+TARGET = torrentsync
 TEMPLATE = app
 
 SOURCES += main.cpp \
@@ -46,6 +46,6 @@ FORMS    +=
 isEmpty(PREFIX) {
  PREFIX = /usr/local
 }
-target.files = torrentsync-backend
+target.files = torrentsync
 target.path = $$PREFIX/bin
 INSTALLS += target
