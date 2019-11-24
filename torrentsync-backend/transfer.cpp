@@ -32,6 +32,7 @@ bool Transfer::start(void)
 
         connect(p, SIGNAL(readyRead()), this, SLOT(outputReady()));
         connect(p, SIGNAL(finished(int)), this, SLOT(finished(int)));
+        connect(p, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(errorOccurred(QProcess::ProcessError)));
 
         this->_process = p;
         return true;
@@ -61,4 +62,10 @@ void Transfer::finished(int exitCode)
     if (exitCode != 0)
         qCWarning(TRANSFER) << QString(this->_process->readAllStandardError()).simplified();
     this->finish(exitCode == 0);
+}
+
+void Transfer::errorOccurred(QProcess::ProcessError error)
+{
+    qCWarning(TRANSFER) << error;
+    this->finish(false);
 }

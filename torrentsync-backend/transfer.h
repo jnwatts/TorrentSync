@@ -25,6 +25,7 @@ public:
 private slots:
     void outputReady(void);
     void finished(int exitCode);
+    void errorOccurred(QProcess::ProcessError error);
 
 private:
     QProcess *_process;
