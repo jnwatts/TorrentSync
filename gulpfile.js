@@ -1,5 +1,5 @@
 var gulp = require('gulp');
-var jsmin = require('gulp-jsmin');
+var terser = require('gulp-terser');
 
 gulp.task('html', function() {
 	return gulp.src('src/html/index.html')
@@ -15,7 +15,7 @@ gulp.task('js', function() {
 			'node_modules/url-parse/dist/url-parse.js',
 			'node_modules/moment/moment.js',
 			])
-		.pipe(jsmin())
+		.pipe(terser())
 		.pipe(gulp.dest('public/js'));
 });
 
