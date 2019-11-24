@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# PROVIDE: torrentsync
+# REQUIRE: DAEMON networking cleanvar 
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name=torrentsync
+rcvar=torrentsync_enable
+
+load_rc_config ${name}
+: ${torrentsync_user:=root}
+: ${torrentsync_config:=/usr/local/etc/torrentsync.conf}
+: ${torrentsync_args:=-e production}
+
+_pidprefix="/var/run"
+pidfile="${_pidprefix}/${name}.pid"
+required_files="${torrentsync_config}"
+
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
+
+torrentsync_start()
+{
+	QT_LOGGING_RULES="*.debug=false" /usr/sbin/daemon -u "${torrentsync_user}" -t ${name} -T ${name} -r -P "${pidfile}" /usr/local/bin/${name} -c "${torrentsync_config}" ${torrentsync_args}
+}
+
+torrentsync_stop()
+{
+	kill $(cat "${pidfile}")
+}	
+
+run_rc_command "${1}"
