@@ -46,6 +46,5 @@ FORMS    +=
 isEmpty(PREFIX) {
  PREFIX = /usr/local
 }
-target.files = torrentsync
 target.path = $$PREFIX/bin
 INSTALLS += target
