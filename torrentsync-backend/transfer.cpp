@@ -23,7 +23,7 @@ bool Transfer::start(void)
 
         p->setProgram(this->rsync);
 
-        args << "-a" << "--info=progress2";
+        args << "-r" << "--info=progress2";
         args << this->host + ":'" + this->torrent.savePath + "/" + this->torrent.name + "'";
         args << this->dest;
         p->setArguments(args);
