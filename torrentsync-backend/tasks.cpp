@@ -1,4 +1,7 @@
 #include <QTimer>
+
+#include "debug.h"
+
 #include "tasks.h"
 #include "task.h"
 

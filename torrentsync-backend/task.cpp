@@ -1,9 +1,15 @@
 #include <QMetaEnum>
+
+#include "debug.h"
+
 #include "task.h"
 
 Task::Task(QString hash, QObject *parent) : QObject(parent),
     hash(hash), state(INIT), progress(0.0)
 {
+    connect(this, &Task::stateChanged, [this]() {
+        qCDebug(TASK) << "stateChanged" << this->toJson();
+    });
 }
 
 QJsonObject Task::toJson() const
