@@ -6,6 +6,9 @@ backend:
 	(cd build-backend; qmake ../torrentsync-backend/backend.pro)
 	+$(MAKE) -C build-backend
 
+backend-install:
+	+$(MAKE) -C build-backend install
+
 frontend-deps:
 	yarn install
 
