@@ -35,10 +35,12 @@ void TorrentSync::init(QString path)
     }
 }
 
-void TorrentSync::initDatabase(QString env)
+void TorrentSync::initDatabase(QString env, bool init)
 {
     QJsonObject db_config = this->_config[env].toObject();
     this->_database.setConfig(db_config);
+    if (init)
+        this->_database.initialize();
 }
 
 void TorrentSync::initDeluge()

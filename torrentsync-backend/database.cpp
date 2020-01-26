@@ -11,6 +11,23 @@ Database::Database(QObject *parent) : QObject(parent)
 {
 }
 
+void Database::initialize(void)
+{
+    auto query = QSqlQuery(this->db());
+
+    query.prepare("DROP TABLE IF EXISTS tasks");
+    if (!this->exec(query))
+        return;
+
+    query.prepare("CREATE TABLE tasks("
+            "`hash` varchar(40) NOT NULL,"
+            "`state` varchar(40) NOT NULL,"
+            "PRIMARY KEY (`hash`)"
+            ") DEFAULT CHARSET=utf8");
+    if (!this->exec(query))
+        return;
+}
+
 void Database::setConfig(QJsonObject config)
 {
     this->_config = config;

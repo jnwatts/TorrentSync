@@ -29,7 +29,7 @@ public:
     ~TorrentSync(void);
 
     void init(QString path);
-    void initDatabase(QString env);
+    void initDatabase(QString env, bool init = false);
     void initDeluge(void);
     void initServer(void);
     void updateDeluge(void);

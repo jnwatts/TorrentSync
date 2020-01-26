@@ -14,6 +14,8 @@ class Database : public QObject
 public:
     explicit Database(QObject *parent = nullptr);
 
+    void initialize(void);
+
     void setConfig(QJsonObject config);
 
     Task::State getState(QString hash);

@@ -24,19 +24,20 @@ int main(int argc, char *argv[])
 
     QCommandLineOption config({"c", "config"}, "Read config from JSON <file>", "file", "backend.json");
     QCommandLineOption env({"e", "env"}, "Database environment to use", "env", "development");
+    QCommandLineOption init("init", "Initialize database");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("TorrentSync backend server");
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.addOptions({config, env});
+    parser.addOptions({config, env, init});
     parser.process(a);
 
     TorrentSync ts(&a);
     g_ts = &ts;
 
     ts.init(parser.value(config));
-    ts.initDatabase(parser.value(env));
+    ts.initDatabase(parser.value(env), parser.isSet(init));
     ts.initDeluge();
     ts.initServer();
     ts.initDebugTasks();
