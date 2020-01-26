@@ -14,6 +14,3 @@ frontend-deps:
 
 frontend:
 	./node_modules/.bin/gulp
-
-database:
-	./sequelize db:migrate

@@ -1,3 +1,0 @@
-#!bash
-
-exec ./node_modules/.bin/sequelize --config backend.json --env production "${@}"
