@@ -80,6 +80,8 @@ bool Database::exec(QSqlQuery &query)
                  qPrintable(query.lastError().text()),
                  qPrintable(query.lastQuery()),
                  qPrintable(values.join(", ")));
+    } else {
+        qCDebug(DATABASE, "%s", qPrintable(query.lastQuery()));
     }
     return result;
 }
