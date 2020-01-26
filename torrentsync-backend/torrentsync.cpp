@@ -150,8 +150,22 @@ void TorrentSync::handleMessage(QtMsgType type, const QMessageLogContext &contex
     if (context.category == DELUGE_IO().categoryName())
         return;
 
+    QString type_str;
+    switch (type) {
+        case QtDebugMsg:
+            type_str = "Debug";
+        case QtInfoMsg:
+            type_str = "Info";
+        case QtWarningMsg:
+            type_str = "Warning";
+        case QtCriticalMsg:
+            type_str = "Critical";
+        case QtFatalMsg:
+            type_str = "Fatal";
+    }
+
     this->_server->notifyClients(JsonRpc::Notification("core.message", QJsonObject({
-        {"type", type},
+        {"type", type_str},
         {"context", QJsonObject({
                 {"category", context.category},
                 {"file", context.file},
