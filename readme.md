@@ -4,4 +4,4 @@ Javscript frontend + Qt5 backend which uses info from a remote instance of Delug
 
 ### License
 
-The application open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
+The application open-sourced software licensed under the [Apache 2.0](https://opensource.org/licenses/apache-2.0)
