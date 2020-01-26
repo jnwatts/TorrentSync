@@ -121,7 +121,7 @@ QSqlDatabase &Database::db()
         db.setDatabaseName(config["database"].toString());
         db.setHostName(config["host"].toString());
         if (!db.open())
-            qFatal("Failed to open database: %s", qPrintable(db.lastError().text()));
+            qCCritical(DATABASE, "Failed to open database: %s", qPrintable(db.lastError().text()));
     }
 
     return db;
