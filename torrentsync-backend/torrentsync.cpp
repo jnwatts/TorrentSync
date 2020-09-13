@@ -115,6 +115,11 @@ void TorrentSync::updateDeluge()
                 updateRefreshing();
             });
         }
+    }, [this, updateRefreshing](DelugeError error) {
+        Q_UNUSED(error);
+        qCDebug(TS, "Auth failure");
+        this->_fetchingTorrents = this->_fetchingLabels = false;
+        updateRefreshing();
     });
 }
 
