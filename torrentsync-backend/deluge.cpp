@@ -14,7 +14,7 @@
 #include "json-rpc.h"
 
 Deluge::Deluge(QString url, QString password, QObject *parent) : QObject(parent),
-     debug(false), authenticated(false), id(1), url(url), password(password)
+     authenticated(false), id(1), url(url), password(password)
 {
     this->mgr = new QNetworkAccessManager();
     connect(mgr, &QNetworkAccessManager::authenticationRequired, [=](QNetworkReply *reply, QAuthenticator *authenticator) {
@@ -71,13 +71,11 @@ void Deluge::invoke(QString method, QVariantList params, std::function<void (QJs
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("accept", "application/json");
     auto data = (QString)JsonRpc::Request(this->id++, method, QJsonArray::fromVariantList(params));
-    if (this->debug)
-        qCDebug(DELUGE_IO) << "Deluge <-" << qPrintable(data);
+    qCDebug(DELUGE_IO) << "Deluge <-" << qPrintable(data);
     auto reply = this->mgr->post(request, data.toUtf8());
     connect(reply, &QNetworkReply::finished, [this, reply, success, failure]() {
         auto data = reply->readAll();
-        if (this->debug)
-            qCDebug(DELUGE_IO) << "Deluge ->" << qPrintable(data);
+        qCDebug(DELUGE_IO) << "Deluge ->" << qPrintable(data);
         auto obj = QJsonDocument::fromJson(data).object();
         QJsonValue result, error;
 

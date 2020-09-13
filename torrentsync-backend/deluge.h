@@ -20,7 +20,6 @@ public:
     ~Deluge(void);
 
     void setHttpAuth(QString user, QString pass) { this->http_user = user; this->http_pass = pass; }
-    void setDebug(bool debug) { this->debug = debug; }
 
     void auth(std::function<void(bool)> success, std::function<void(DelugeError)> failure = nullptr);
     void labels(std::function<void(QStringList)> success, std::function<void(DelugeError)> failure = nullptr);
@@ -34,7 +33,6 @@ public slots:
 private:
     void invoke(QString method, QVariantList params, std::function<void (QJsonValue)> success = nullptr, std::function<void (DelugeError)> failure = nullptr);
 
-    bool debug;
     bool authenticated;
     int id;
     QString url;
