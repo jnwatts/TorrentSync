@@ -1,4 +1,5 @@
 #include <QTimer>
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <deluge.h>
@@ -161,14 +162,19 @@ void TorrentSync::handleMessage(QtMsgType type, const QMessageLogContext &contex
     switch (type) {
         case QtDebugMsg:
             type_str = "Debug";
+            break;
         case QtInfoMsg:
             type_str = "Info";
+            break;
         case QtWarningMsg:
             type_str = "Warning";
+            break;
         case QtCriticalMsg:
             type_str = "Critical";
+            break;
         case QtFatalMsg:
             type_str = "Fatal";
+            break;
     }
 
     this->_server->notifyClients(JsonRpc::Notification("core.message", QJsonObject({
