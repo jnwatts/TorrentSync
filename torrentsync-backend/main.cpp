@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
+#include <QSslConfiguration>
 #include <signal.h>
 
 #include "debug.h"
@@ -21,6 +22,14 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     register_types();
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    // Stupid work-around, potentially only on FreeBSD, where the system certificates are loaded, but ARE NOT USED?!?!
+    QSslConfiguration conf = QSslConfiguration::defaultConfiguration();
+    for (auto cert : conf.systemCaCertificates())
+        conf.addCaCertificate(cert);
+    QSslConfiguration::setDefaultConfiguration(conf);
+#endif
 
     QCommandLineOption config({"c", "config"}, "Read config from JSON <file>", "file", "backend.json");
     QCommandLineOption env({"e", "env"}, "Database environment to use", "env", "development");
