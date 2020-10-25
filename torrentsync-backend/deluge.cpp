@@ -73,7 +73,7 @@ void Deluge::invoke(QString method, QVariantList params, std::function<void (QJs
     auto data = (QString)JsonRpc::Request(this->id++, method, QJsonArray::fromVariantList(params));
     qCDebug(DELUGE_IO) << "Deluge <-" << qPrintable(data);
     auto reply = this->mgr->post(request, data.toUtf8());
-    connect(reply, &QNetworkReply::finished, [this, reply, success, failure]() {
+    connect(reply, &QNetworkReply::finished, [reply, success, failure]() {
         auto data = reply->readAll();
         qCDebug(DELUGE_IO) << "Deluge ->" << qPrintable(data);
         auto obj = QJsonDocument::fromJson(data).object();
@@ -99,8 +99,19 @@ void Deluge::invoke(QString method, QVariantList params, std::function<void (QJs
         }
 
     });
-    connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), [this, reply, failure](QNetworkReply::NetworkError error) {
-        qCWarning(DELUGE) << "Error:" << error;
+
+    connect(reply, &QNetworkReply::sslErrors, [reply, failure](const QList<QSslError> &errors) {
+        for (auto e : errors)
+            qCWarning(DELUGE) << "SSL error: " << e;
+    });
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    connect(reply, &QNetworkReply::errorOccurred, [reply, failure](QNetworkReply::NetworkError error)
+#else
+    connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), [reply, failure](QNetworkReply::NetworkError error)
+#endif
+    {
+        qCWarning(DELUGE) << "Network error:" << reply->errorString();
         if (failure)
             failure({-1, "Network error"});
     });
