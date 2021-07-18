@@ -362,6 +362,10 @@ void TorrentSync::updateTasks(QStringList &hashes)
                 t->state = iter.value();
                 break;
             }
+        } else {
+            if (this->torrents.contains(t->hash)) {
+                dynamic_cast<Transfer*>(t)->torrent = this->torrents[t->hash];
+            }
         }
     }
 }
