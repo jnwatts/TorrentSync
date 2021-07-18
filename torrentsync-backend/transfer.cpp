@@ -17,6 +17,21 @@ QString Transfer::getType() const
 
 bool Transfer::start(void)
 {
+    auto escape_path = [](const QString &in) -> QString {
+        QString out;
+        for (const QChar c : in) {
+            switch (c.unicode()) {
+                case '\'':
+                    out += "'?'";
+                    break;
+                default:
+                    out += c;
+                    break;
+            }
+        }
+        return out;
+    };
+
     if (Task::start()) {
         auto p = new QProcess();
         QStringList args;
@@ -24,7 +39,7 @@ bool Transfer::start(void)
         p->setProgram(this->rsync);
 
         args << "-r" << "--info=progress2";
-        args << this->host + ":'" + this->torrent.savePath + "/" + this->torrent.name + "'";
+        args << this->host + ":" + this->torrent.savePath + "/'" + escape_path(this->torrent.name) + "'";
         args << this->dest;
         p->setArguments(args);
 
