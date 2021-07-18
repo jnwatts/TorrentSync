@@ -7,7 +7,7 @@
 #include <QMutex>
 #include <QList>
 
-#include "deluge.h"
+#include "torrentservice.h"
 #include "database.h"
 #include "torrent.h"
 #include "server.h"
@@ -30,9 +30,9 @@ public:
 
     void init(QString path);
     void initDatabase(QString env, bool init = false);
-    void initDeluge(void);
+    void initTorrentService(void);
     void initServer(void);
-    void updateDeluge(void);
+    void updateTorrents(void);
     void initDebugTasks(void);
     void handleMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
@@ -80,7 +80,7 @@ private:
     QJsonObject _config;
     QMutex _mutex;
     QWaitCondition _updating;
-    Deluge *_deluge;
+    TorrentService *_torrentservice;
     bool _fetchingLabels;
     bool _fetchingTorrents;
     Server *_server;

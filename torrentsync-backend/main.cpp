@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
     ts.init(parser.value(config));
     ts.initDatabase(parser.value(env), parser.isSet(init));
-    ts.initDeluge();
+    ts.initTorrentService();
     ts.initServer();
     ts.initDebugTasks();
 

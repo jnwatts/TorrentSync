@@ -6,12 +6,14 @@
 
 #include "debug.h"
 
+#include "deluge.h"
+
 #include "torrentsync.h"
 #include "debugtransfer.h"
 #include "transfer.h"
 
 TorrentSync::TorrentSync(QObject *parent) : QObject(parent),
-    _deluge(nullptr), _fetchingLabels(false), _fetchingTorrents(false),
+    _torrentservice(nullptr), _fetchingLabels(false), _fetchingTorrents(false),
     _server(nullptr)
 {
     this->labels << "unlabeled";
@@ -19,8 +21,8 @@ TorrentSync::TorrentSync(QObject *parent) : QObject(parent),
 
 TorrentSync::~TorrentSync(void)
 {
-    if (this->_deluge)
-        delete this->_deluge;
+    if (this->_torrentservice)
+        delete this->_torrentservice;
 
     if (this->_server)
         delete this->_server;
@@ -44,13 +46,11 @@ void TorrentSync::initDatabase(QString env, bool init)
         this->_database.initialize();
 }
 
-void TorrentSync::initDeluge()
+void TorrentSync::initTorrentService()
 {
-    QJsonObject obj = this->_config["deluge"].toObject();
-    this->_deluge = new Deluge(obj["url"].toString(), obj["password"].toString());
-    if (obj.contains("http_auth")) {
-        obj = obj["http_auth"].toObject();
-        this->_deluge->setHttpAuth(obj["user"].toString(), obj["pass"].toString());
+    QString service = this->_config["service"].toString();
+    if (service == "deluge") {
+        this->_torrentservice = new Deluge(this->_config["deluge"].toObject());
     }
 }
 
@@ -61,7 +61,7 @@ void TorrentSync::initServer()
     connect(this->_server, &Server::clientConnected, this, &TorrentSync::clientConnected);
 }
 
-void TorrentSync::updateDeluge()
+void TorrentSync::updateTorrents()
 {
     this->_mutex.lock();
     if (this->_fetchingLabels || this->_fetchingLabels) {
@@ -84,42 +84,34 @@ void TorrentSync::updateDeluge()
     };
     updateRefreshing();
 
-    this->_deluge->auth([this, updateRefreshing](bool complete) {
-        if (complete) {
-            this->_deluge->labels([this, updateRefreshing](QStringList labels) {
-                this->labels = labels;
-                this->_server->notifyClients(JsonRpc::Notification("labels.update", QJsonArray::fromStringList(this->labels)));
-                this->_fetchingLabels = false;
-                updateRefreshing();
-            }, [this, updateRefreshing](DelugeError error) {
-                Q_UNUSED(error);
-                this->_fetchingLabels = false;
-                updateRefreshing();
-            });
-            this->_deluge->torrents([this, updateRefreshing](TorrentHash torrents) {
-                if (torrents.size() > 0)
-                    this->torrents = torrents;
-
-                QStringList hashes = this->torrents.keys();
-                this->_tasks.filter(hashes);
-                this->_database.filter(hashes);
-                this->updateTasks(hashes);
-
-                this->updateClientTorrents(this->_clientState);
-                this->updateClientTasks(this->_clientState);
-
-                this->_fetchingTorrents = false;
-                updateRefreshing();
-            }, [this, updateRefreshing](DelugeError error) {
-                Q_UNUSED(error);
-                this->_fetchingTorrents = false;
-                updateRefreshing();
-            });
-        }
-    }, [this, updateRefreshing](DelugeError error) {
+    this->_torrentservice->labels([this, updateRefreshing](QStringList labels) {
+        this->labels = labels;
+        this->_server->notifyClients(JsonRpc::Notification("labels.update", QJsonArray::fromStringList(this->labels)));
+        this->_fetchingLabels = false;
+        updateRefreshing();
+    }, [this, updateRefreshing](ErrorResponse error) {
         Q_UNUSED(error);
-        qCDebug(TS, "Auth failure");
-        this->_fetchingTorrents = this->_fetchingLabels = false;
+        this->_fetchingLabels = false;
+        updateRefreshing();
+    });
+
+    this->_torrentservice->torrents([this, updateRefreshing](TorrentHash torrents) {
+        if (torrents.size() > 0)
+            this->torrents = torrents;
+
+        QStringList hashes = this->torrents.keys();
+        this->_tasks.filter(hashes);
+        this->_database.filter(hashes);
+        this->updateTasks(hashes);
+
+        this->updateClientTorrents(this->_clientState);
+        this->updateClientTasks(this->_clientState);
+
+        this->_fetchingTorrents = false;
+        updateRefreshing();
+    }, [this, updateRefreshing](ErrorResponse error) {
+        Q_UNUSED(error);
+        this->_fetchingTorrents = false;
         updateRefreshing();
     });
 }
@@ -152,10 +144,10 @@ void TorrentSync::handleMessage(QtMsgType type, const QMessageLogContext &contex
 {
     Q_UNUSED(context);
 
-    // Skip client and deluge IO (mostly to avoid noise, and also passwords)
+    // Skip these (mostly to avoid noise, and also passwords)
     if (context.category == CLIENT_IO().categoryName())
         return;
-    if (context.category == DELUGE_IO().categoryName())
+    if (context.category == TORRENTSERVICE_IO().categoryName())
         return;
 
     QString type_str;
@@ -215,7 +207,7 @@ void TorrentSync::handleRequest(JsonRpc request)
 
     if (request.method == "core.refresh") {
         // No params
-        this->updateDeluge();
+        this->updateTorrents();
         parsed = true;
     } else if (request.method == "core.get_state") {
         // Params: label

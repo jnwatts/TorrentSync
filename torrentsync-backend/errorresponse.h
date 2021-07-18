@@ -7,23 +7,23 @@
 #include <QJsonObject>
 #include <QHash>
 
-class DelugeError
+class ErrorResponse
 {
 public:
-    DelugeError();
-    DelugeError(int code, QString message);
-    DelugeError(const QJsonObject &value);
-    DelugeError(const QJsonValue &value);
+    ErrorResponse();
+    ErrorResponse(int code, QString message);
+    ErrorResponse(const QJsonObject &value);
+    ErrorResponse(const QJsonValue &value);
 
     int code;
     QString message;
 
     QJsonObject toJson(void) const;
-    static DelugeError fromJson(QJsonObject obj);
+    static ErrorResponse fromJson(QJsonObject obj);
     operator QString() const;
     operator QJsonObject() const;
 };
 
-QDebug operator<< (QDebug debug, const DelugeError &t);
+QDebug operator<< (QDebug debug, const ErrorResponse &t);
 
 #endif

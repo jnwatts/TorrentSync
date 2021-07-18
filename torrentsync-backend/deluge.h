@@ -7,23 +7,19 @@
 #include <QVariantList>
 #include <functional>
 
-#include "delugeerror.h"
-#include "torrent.h"
+#include "torrentservice.h"
 
 class QNetworkAccessManager;
 
-class Deluge : public QObject
+class Deluge : public TorrentService
 {
     Q_OBJECT
 public:
-    explicit Deluge(QString url, QString password, QObject *parent = 0);
+    explicit Deluge(const QJsonObject &params, QObject *parent = 0);
     ~Deluge(void);
 
-    void setHttpAuth(QString user, QString pass) { this->http_user = user; this->http_pass = pass; }
-
-    void auth(std::function<void(bool)> success, std::function<void(DelugeError)> failure = nullptr);
-    void labels(std::function<void(QStringList)> success, std::function<void(DelugeError)> failure = nullptr);
-    void torrents(std::function<void(TorrentHash)> success, std::function<void(DelugeError)> failure = nullptr);
+    void labels(std::function<void(QStringList)> success, std::function<void(ErrorResponse)> failure = nullptr);
+    void torrents(std::function<void(TorrentHash)> success, std::function<void(ErrorResponse)> failure = nullptr);
 
 signals:
 
@@ -31,7 +27,8 @@ signals:
 public slots:
 
 private:
-    void invoke(QString method, QVariantList params, std::function<void (QJsonValue)> success = nullptr, std::function<void (DelugeError)> failure = nullptr);
+    void auth(std::function<void(bool)> success, std::function<void(ErrorResponse)> failure = nullptr);
+    void invoke(QString method, QVariantList params, std::function<void (QJsonValue)> success = nullptr, std::function<void (ErrorResponse)> failure = nullptr);
 
     bool authenticated;
     int id;

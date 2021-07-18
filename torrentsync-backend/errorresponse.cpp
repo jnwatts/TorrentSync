@@ -1,19 +1,19 @@
 #include <QJsonDocument>
-#include "delugeerror.h"
+#include "errorresponse.h"
 
-DelugeError::DelugeError() :
+ErrorResponse::ErrorResponse() :
     code(0), message()
 {
 
 }
 
-DelugeError::DelugeError(int code, QString message) :
+ErrorResponse::ErrorResponse(int code, QString message) :
     code(code), message(message)
 {
 
 }
 
-DelugeError::DelugeError(const QJsonObject &obj)
+ErrorResponse::ErrorResponse(const QJsonObject &obj)
 {
     if (obj.contains("code"))
         this->code = obj["code"].toDouble();
@@ -22,13 +22,13 @@ DelugeError::DelugeError(const QJsonObject &obj)
         this->message = obj["message"].toString();
 }
 
-DelugeError::DelugeError(const QJsonValue &value) :
-    DelugeError(value.toObject())
+ErrorResponse::ErrorResponse(const QJsonValue &value) :
+    ErrorResponse(value.toObject())
 {
 
 }
 
-QJsonObject DelugeError::toJson() const
+QJsonObject ErrorResponse::toJson() const
 {
     QJsonObject obj;
 
@@ -38,24 +38,24 @@ QJsonObject DelugeError::toJson() const
     return obj;
 }
 
-DelugeError DelugeError::fromJson(QJsonObject obj)
+ErrorResponse ErrorResponse::fromJson(QJsonObject obj)
 {
-    return DelugeError(obj);
+    return ErrorResponse(obj);
 }
 
-DelugeError::operator QJsonObject() const
+ErrorResponse::operator QJsonObject() const
 {
     return this->toJson();
 }
 
-DelugeError::operator QString() const
+ErrorResponse::operator QString() const
 {
     return QString::fromUtf8(QJsonDocument(this->toJson()).toJson()).simplified();
 }
 
-QDebug operator<<(QDebug debug, const DelugeError &t)
+QDebug operator<<(QDebug debug, const ErrorResponse &t)
 {
-    debug.nospace() << "DelugeError(";
+    debug.nospace() << "ErrorResponse(";
     debug.nospace() << qPrintable(t) << ")";
     return debug.space();
 }

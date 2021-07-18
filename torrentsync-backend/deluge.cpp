@@ -10,13 +10,23 @@
 
 #include "debug.h"
 
+#include "torrentservice.h"
 #include "deluge.h"
 #include "json-rpc.h"
 
-Deluge::Deluge(QString url, QString password, QObject *parent) : QObject(parent),
-     authenticated(false), id(1), url(url), password(password)
+Deluge::Deluge(const QJsonObject &params, QObject *parent) : TorrentService(params, parent),
+     authenticated(false), id(1)
 {
     this->mgr = new QNetworkAccessManager();
+    this->url = params["url"].toString();
+    this->password = params["password"].toString();
+
+    if (params.contains("http_auth")) {
+        QJsonObject http_auth = params["http_auth"].toObject();
+        this->http_user = http_auth["user"].toString();
+        this->http_pass = http_auth["pass"].toString();
+    }
+
     connect(mgr, &QNetworkAccessManager::authenticationRequired, [=](QNetworkReply *reply, QAuthenticator *authenticator) {
         Q_UNUSED(reply);
         authenticator->setUser(this->http_user);
@@ -29,8 +39,17 @@ Deluge::~Deluge()
     delete this->mgr;
 }
 
-void Deluge::labels(std::function<void(QStringList)> success, std::function<void(DelugeError)> failure)
+void Deluge::labels(std::function<void(QStringList)> success, std::function<void(ErrorResponse)> failure)
 {
+    if (!this->authenticated) {
+        this->auth([this, success, failure](bool result) {
+            if (result) {
+                this->authenticated = true;
+                this->labels(success, failure);
+            }
+        }, failure);
+        return;
+    }
     this->invoke("label.get_labels", {}, [success](QJsonValue result) {
         auto json_labels = result.toArray();
         QStringList labels;
@@ -43,8 +62,17 @@ void Deluge::labels(std::function<void(QStringList)> success, std::function<void
     }, failure);
 }
 
-void Deluge::torrents(std::function<void(TorrentHash)> success, std::function<void(DelugeError)> failure)
+void Deluge::torrents(std::function<void(TorrentHash)> success, std::function<void(ErrorResponse)> failure)
 {
+    if (!this->authenticated) {
+        this->auth([this, success, failure](bool result) {
+            if (result) {
+                this->authenticated = true;
+                this->torrents(success, failure);
+            }
+        }, failure);
+        return;
+    }
     this->invoke("core.get_torrents_status", {QVariantList({}), QVariantList({"name", "save_path", "progress", "label", "time_added", "total_wanted"})}, [success](QJsonValue result) {
         auto json_torrents = result.toObject();
         TorrentHash torrents;
@@ -57,7 +85,7 @@ void Deluge::torrents(std::function<void(TorrentHash)> success, std::function<vo
     }, failure);
 }
 
-void Deluge::auth(std::function<void (bool)> success, std::function<void(DelugeError)> failure)
+void Deluge::auth(std::function<void (bool)> success, std::function<void(ErrorResponse)> failure)
 {
     //TODO: Move this above to be in order...
     this->invoke("auth.login", {this->password}, [success](QJsonValue result) {
@@ -65,17 +93,17 @@ void Deluge::auth(std::function<void (bool)> success, std::function<void(DelugeE
     }, failure);
 }
 
-void Deluge::invoke(QString method, QVariantList params, std::function<void (QJsonValue)> success, std::function<void (DelugeError)> failure)
+void Deluge::invoke(QString method, QVariantList params, std::function<void (QJsonValue)> success, std::function<void (ErrorResponse)> failure)
 {
     auto request = QNetworkRequest(this->url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("accept", "application/json");
     auto data = (QString)JsonRpc::Request(this->id++, method, QJsonArray::fromVariantList(params));
-    qCDebug(DELUGE_IO) << "Deluge <-" << qPrintable(data);
+    qCDebug(TORRENTSERVICE_IO) << "Deluge <-" << qPrintable(data);
     auto reply = this->mgr->post(request, data.toUtf8());
     connect(reply, &QNetworkReply::finished, [reply, success, failure]() {
         auto data = reply->readAll();
-        qCDebug(DELUGE_IO) << "Deluge ->" << qPrintable(data);
+        qCDebug(TORRENTSERVICE_IO) << "Deluge ->" << qPrintable(data);
         auto obj = QJsonDocument::fromJson(data).object();
         QJsonValue result, error;
 
@@ -100,18 +128,14 @@ void Deluge::invoke(QString method, QVariantList params, std::function<void (QJs
 
     });
 
-    connect(reply, &QNetworkReply::sslErrors, [reply, failure](const QList<QSslError> &errors) {
+    connect(reply, &QNetworkReply::sslErrors, [failure](const QList<QSslError> &errors) {
         for (auto e : errors)
             qCWarning(DELUGE) << "SSL error: " << e;
     });
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    connect(reply, &QNetworkReply::errorOccurred, [reply, failure](QNetworkReply::NetworkError error)
-#else
-    connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), [reply, failure](QNetworkReply::NetworkError error)
-#endif
+    connect(reply, &QNetworkReply::errorOccurred, [failure](QNetworkReply::NetworkError error)
     {
-        qCWarning(DELUGE) << "Network error:" << reply->errorString();
+        qCWarning(DELUGE) << "Network error:" << error;
         if (failure)
             failure({-1, "Network error"});
     });
