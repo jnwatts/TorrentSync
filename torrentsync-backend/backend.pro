@@ -27,6 +27,7 @@ SOURCES += main.cpp \
     tasks.cpp
 
 HEADERS  += \
+    debug.h \
     deluge.h \
     errorresponse.h \
     torrent.h \
