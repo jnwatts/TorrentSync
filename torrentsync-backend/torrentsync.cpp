@@ -98,11 +98,14 @@ void TorrentSync::updateTorrents()
         updateRefreshing();
     });
 
+    qCDebug(TS) << "updateTorrents():torrents";
     this->_torrentservice->torrents([this, updateRefreshing](TorrentHash torrents) {
         if (torrents.size() > 0)
             this->torrents = torrents;
 
+
         QStringList hashes = this->torrents.keys();
+        qCDebug(TS) << hashes;
         this->_tasks.filter(hashes);
         this->_database.filter(hashes);
         this->updateTasks(hashes);
@@ -113,7 +116,7 @@ void TorrentSync::updateTorrents()
         this->_fetchingTorrents = false;
         updateRefreshing();
     }, [this, updateRefreshing](ErrorResponse error) {
-        Q_UNUSED(error);
+        qCDebug(TS) << error.message;
         this->_fetchingTorrents = false;
         updateRefreshing();
     });
