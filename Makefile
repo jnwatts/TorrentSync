@@ -20,3 +20,7 @@ frontend-deps:
 
 frontend:
 	./node_modules/.bin/gulp
+
+clean:
+	rm -Rf build-backend
+	rm -Rf build-libmaia
