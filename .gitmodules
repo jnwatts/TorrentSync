@@ -1,0 +1,3 @@
+[submodule "libmaia"]
+	path = libmaia
+	url = https://github.com/jnwatts/libmaia.git
