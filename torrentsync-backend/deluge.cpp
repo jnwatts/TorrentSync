@@ -73,6 +73,8 @@ void Deluge::torrents(std::function<void(TorrentHash)> success, std::function<vo
         }, failure);
         return;
     }
+    qCDebug(TORRENTSERVICE_IO) << "BUG: Need to adapt save_path in Deluge to be full path: Can I ask for it from Deluge?";
+    assert(false);
     this->invoke("core.get_torrents_status", {QVariantList({}), QVariantList({"name", "save_path", "progress", "label", "time_added", "total_wanted"})}, [success](QJsonValue result) {
         auto json_torrents = result.toObject();
         TorrentHash torrents;

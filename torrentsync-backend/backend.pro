@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core network websockets sql
+QT       += core network websockets sql xml
 CONFIG   += c++14
 
 TARGET = torrentsync
@@ -13,6 +13,7 @@ TEMPLATE = app
 SOURCES += main.cpp \
     debug.cpp \
     deluge.cpp \
+    rtorrent.cpp \
     errorresponse.cpp \
     torrent.cpp \
     torrentsync.cpp \
@@ -29,6 +30,7 @@ SOURCES += main.cpp \
 HEADERS  += \
     debug.h \
     deluge.h \
+    rtorrent.h \
     errorresponse.h \
     torrent.h \
     torrentsync.h \
@@ -44,6 +46,9 @@ HEADERS  += \
     tasks.h
 
 FORMS    +=
+
+LIBS += -L../build-libmaia -lmaia
+INCLUDEPATH += ../libmaia
 
 isEmpty(PREFIX) {
  PREFIX = /usr/local

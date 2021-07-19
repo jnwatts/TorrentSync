@@ -1,7 +1,7 @@
 all: backend frontend
 
 
-backend:
+backend: libmaia
 	mkdir -p build-backend
 	(cd build-backend; qmake ../torrentsync-backend/backend.pro)
 	+$(MAKE) -C build-backend

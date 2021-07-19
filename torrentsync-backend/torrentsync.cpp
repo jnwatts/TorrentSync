@@ -7,6 +7,7 @@
 #include "debug.h"
 
 #include "deluge.h"
+#include "rtorrent.h"
 
 #include "torrentsync.h"
 #include "debugtransfer.h"
@@ -51,6 +52,8 @@ void TorrentSync::initTorrentService()
     QString service = this->_config["service"].toString();
     if (service == "deluge") {
         this->_torrentservice = new Deluge(this->_config["deluge"].toObject());
+    } else if (service == "rtorrent") {
+        this->_torrentservice = new RTorrent(this->_config["rtorrent"].toObject());
     }
 }
 
