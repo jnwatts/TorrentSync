@@ -17,21 +17,6 @@ QString Transfer::getType() const
 
 bool Transfer::start(void)
 {
-    auto escape_path = [](const QString &in) -> QString {
-        QString out;
-        for (const QChar c : in) {
-            switch (c.unicode()) {
-                case '\'':
-                    out += "'?'";
-                    break;
-                default:
-                    out += c;
-                    break;
-            }
-        }
-        return out;
-    };
-
     if (Task::start()) {
         auto p = new QProcess();
         QStringList args;
