@@ -55,6 +55,7 @@ void TorrentSync::initTorrentService()
     } else if (service == "rtorrent") {
         this->_torrentservice = new RTorrent(this->_config["rtorrent"].toObject());
     }
+    assert(this->_torrentservice);
 }
 
 void TorrentSync::initServer()
