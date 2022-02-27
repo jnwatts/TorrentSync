@@ -187,6 +187,25 @@
             return td;
         };
 
+        var vertProgress = (value) => {
+            var outer = $('<div class="progress progress-bar-vertical">');
+            var inner = $('<div class="progress-bar" role="progressbar" aria-valuenow="' + value + '" aria-valuemin="0" aria-valuemax="' + value + '" style="height: ' + value + '%;">');
+            if (value < 100) {
+                inner.addClass('active');
+            }
+            inner.append($('<span class="sr-only">' + value + '% Complete</span>'));
+            outer.append(inner);
+            return outer;
+        };
+
+        var addProgress = (remote_progress, local_progress) => {
+            var td = $('<td />');
+            td.addClass('task-progress');
+            td.append(vertProgress(remote_progress));
+            td.append(vertProgress(local_progress));
+            tr.append(td);
+        };
+
         var addAction = (name, icon, action) => {
             var a = a_button('sm');
             a.attr('href', torrentsync.route('torrent.' + action, [t.hash]));
@@ -200,19 +219,22 @@
         };
 
         var task = t.task;
-        var task_progress = 0;
+        var remote_progress = Math.floor(t.progress);
+        var local_progress = 0;
         if (task) {
             if (task.state == Task.COMPLETE)
-                task_progress = 100;
+                local_progress = 100;
             else
-                task_progress = Math.floor(task.progress);
+                local_progress = Math.floor(task.progress);
         }
 
-        addField('name', t.name);
-        addField('progress', Math.floor(t.progress) + "% / " + task_progress + "%");
+        console.log(t);
+
+        addField('name', t.name.replace(/\./g, ".\u200B"));
+        addProgress(remote_progress, local_progress);
         addField('size', filesize(t.total_wanted));
-        addField('added', moment.unix(t.time_added).format('YYYY-MM-DD HH:mm:ss'));
-        addField('label', t.label ? t.label : "unlabeled");
+        addField('added', moment.unix(t.time_added).format('YYYY\u2011MM\u2011DD HH:mm:ss'));
+        // addField('label', t.label ? t.label : "unlabeled");
         var actions = addField('actions', '');
         actions.empty();
 
@@ -229,10 +251,10 @@
             } else if (task.state == Task.FAILED) {
                 actions.append(glyph('exclamation-sign'));
                 addAction('Transfer', 'repeat', 'transfer');
-            } else {
+            } else if (remote_progress >= 100) {
                 addAction('Transfer', 'save', 'transfer');
             }
-        } else {
+        } else if (remote_progress >= 100) {
             addAction('Transfer', 'save', 'transfer');
         }
     }
