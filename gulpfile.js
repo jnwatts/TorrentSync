@@ -1,13 +1,15 @@
-var gulp = require('gulp');
-var terser = require('gulp-terser');
+const { task, series, watch, src, dest } = require('gulp');
+const terser = require('gulp-terser');
+// var gulp = require('gulp');
+// var terser = require('gulp-terser');
 
-gulp.task('html', function() {
-	return gulp.src('src/html/index.html')
-		.pipe(gulp.dest('public'));
+task('html', function() {
+	return src('src/html/index.html')
+		.pipe(dest('public'));
 });
 
-gulp.task('js', function() {
-	return gulp.src([
+task('js', function() {
+	return src([
 			'src/js/*.js',
 			'node_modules/jquery/dist/jquery.js',
 			'node_modules/bootstrap/dist/js/bootstrap.js',
@@ -16,22 +18,28 @@ gulp.task('js', function() {
 			'node_modules/moment/moment.js',
 			])
 		.pipe(terser())
-		.pipe(gulp.dest('public/js'));
+		.pipe(dest('public/js'));
 });
 
-gulp.task('css', function() {
-	return gulp.src([
+task('css', function() {
+	return src([
 			'src/css/*.css',
 			'node_modules/bootstrap/dist/css/bootstrap.css'
 			])
-		.pipe(gulp.dest('public/css'));
+		.pipe(dest('public/css'));
 });
 
-gulp.task('fonts', function() {
-	return gulp.src([
+task('fonts', function() {
+	return src([
 			'node_modules/bootstrap/dist/fonts/*'
 			])
-		.pipe(gulp.dest('public/fonts'));
+		.pipe(dest('public/fonts'));
 });
 
-gulp.task('default', gulp.series('html', 'js', 'css', 'fonts'));
+task('default', series('html', 'js', 'css', 'fonts'));
+
+task('watch', function() {
+	watch(['src/html/*'], task('html'));
+	watch(['src/js/*'], task('js'));
+	watch(['src/css/*'], task('css'));
+});
