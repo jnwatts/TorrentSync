@@ -19,7 +19,10 @@ frontend-deps:
 	yarn install
 
 frontend:
-	./node_modules/.bin/gulp
+	yarn parcel build --public-url .
+
+frontend-dev:
+	yarn parcel serve
 
 clean:
 	rm -Rf build-backend

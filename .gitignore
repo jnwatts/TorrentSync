@@ -1,6 +1,7 @@
-/public
+/dist
 /node_modules
 /backend.json
 .*.swp
 *.pro.user
 /build-*/
+/.parcel-cache

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <title>TorrentSync</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+        <!-- CSS And JavaScript -->
+        <link rel="stylesheet" type="text/css" href="app.scss">
+    </head>
+
+    <body>
+        <div class="container">
+
+<br>
+
+<div>
+<h2>TODO:</h2>
+<ul>
+<li>Is there a C++ promise interface/library that includes callback args for both success and failure?</li>
+<li>App-wide catch log messages, send to client based on debug/severity?</li>
+</ul>
+</div>
+
+
+
+<div class="card">
+    <div class="card-header">
+        Torrents
+        <a class="btn btn-sm" type="button" id="refresh" href="#core.refresh">
+            <i class="fa fa-arrows-rotate"></i>
+        </a>
+        <div class="dropdown" style="display:inline" id="labels">
+            <button class="btn dropdown-toggle" type="button" data-toggle="dropdown">
+                <span id="labels-current"></span>
+            </button>
+            <ul class="dropdown-menu" id="labels-list">
+            </ul>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <table class="table table-striped task-table">
+            <!-- Table Body -->
+            <tbody id="torrents">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+        </div>
+
+        <script type="module" src="app.js"></script>
+    </body>
+</html>

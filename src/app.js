@@ -1,5 +1,12 @@
 "use strict";
 
+import $ from 'jquery';
+import bootstrap from 'bootstrap';
+import jsonrpc from 'npm:jsonrpc-lite/jsonrpc.js';
+import moment from 'npm:moment/moment.js';
+import filesize from './filesize';
+import "@fortawesome/fontawesome-free/css/all.css";
+
 (function (global) {
     window.label = null;
     window.labels = [];
@@ -15,10 +22,10 @@
     };
 
     window.glyph = (type) => {
-        var g = $('<span />');
-        g.addClass('glyphicon');
+        var g = $('<i />');
+        g.addClass('fa');
         if (type) {
-            g.addClass('glyphicon-' + type);
+            g.addClass('fa-' + type);
         }
         g.attr('aria-hidden', 'true');
         return g;
@@ -123,11 +130,11 @@
 
     window.populateLabel = (l) => {
         var list = $('#labels-list');
-        var item = list.children('.label-item#label-' + l.label);
+        var item = list.children('.dropdown-item#label-' + l.label);
         if (item.length <= 0) {
             item = $('<li />');
             item.attr('id', 'label-' + l.label);
-            item.addClass('label-item');
+            item.addClass('dropdown-item');
             list.append(item);
         }
         var a = $('<a />')
@@ -189,7 +196,7 @@
 
         var vertProgress = (value) => {
             var outer = $('<div class="progress progress-bar-vertical">');
-            var inner = $('<div class="progress-bar" role="progressbar" aria-valuenow="' + value + '" aria-valuemin="0" aria-valuemax="' + value + '" style="height: ' + value + '%;">');
+            var inner = $('<div class="progress-bar" role="progressbar" aria-valuenow="' + value + '" aria-valuemin="0" aria-valuemax="100" style="height: ' + value + '%;">');
             if (value < 100) {
                 inner.addClass('active');
             }
@@ -212,6 +219,7 @@
             a.click(torrentsync.action);
             a.append(glyph(icon));
             a.attr('title', name);
+            // a.addClass('btn-secondary');
             actions.append(a);
         };
         var addState = (icon) => {
@@ -228,7 +236,7 @@
                 local_progress = Math.floor(task.progress);
         }
 
-        console.log(t);
+        // console.log(t);
 
         addField('name', t.name.replace(/\./g, ".\u200B"));
         addProgress(remote_progress, local_progress);
@@ -240,22 +248,22 @@
 
         if (task) {
             if (task.state == Task.COMPLETE) {
-                addState('saved');
-                addAction('Transfer', 'repeat', 'transfer');
+                addState('check');
+                addAction('Transfer', 'arrow-rotate-right', 'transfer');
             } else if (task.state == Task.QUEUED) {
-                addState('time');
-                addAction('Abort', 'remove', 'abort');
+                addState('stopwatch');
+                addAction('Abort', 'ban', 'abort');
             } else if (task.state == Task.RUNNING) {
                 addState('transfer');
-                addAction('Abort', 'remove', 'abort');
+                addAction('Abort', 'ban', 'abort');
             } else if (task.state == Task.FAILED) {
-                actions.append(glyph('exclamation-sign'));
-                addAction('Transfer', 'repeat', 'transfer');
+                addState('exclamation');
+                addAction('Transfer', 'arrow-rotate-right', 'transfer');
             } else if (remote_progress >= 100) {
-                addAction('Transfer', 'save', 'transfer');
+                addAction('Transfer', 'download', 'transfer');
             }
         } else if (remote_progress >= 100) {
-            addAction('Transfer', 'save', 'transfer');
+            addAction('Transfer', 'download', 'transfer');
         }
     }
 
@@ -347,8 +355,10 @@
                     l = "";
             }
             torrentsync.request('core.get_state', [l]).then((state) => {
-                refreshLabels(state.labels);
-                initState(state.label);
+                if (state !== undefined) {
+                    refreshLabels(state.labels);
+                    initState(state.label);
+                }
             });
         },
         getLabels: () => {
@@ -406,6 +416,50 @@
     };
 
     $(() => {
+        if (process.env.NODE_ENV !== 'production') {
+            refreshLabels(["test1", "test2"]);
+            initState("test1");
+            m = new Map();
+            m.set(
+                "1",
+                {"label":"unlabeled","name":"Test COMPLETE","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                    "task": {"progress":0,"state":"COMPLETE","type":"transfer"}
+                }
+            );
+            m.set(
+                "2",
+                {"label":"unlabeled","name":"Test QUEUED","progress":0,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                    "task": {"progress":0,"state":"QUEUED","type":"transfer"}
+                }
+            );
+            m.set(
+                "3",
+                {"label":"unlabeled","name":"Test RUNNING","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                    "task": {"progress":50,"state":"RUNNING","type":"transfer"}
+                }
+            );
+            m.set(
+                "4",
+                {"label":"unlabeled","name":"Test FAILED","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                    "task": {"progress":0,"state":"FAILED","type":"transfer"}
+                }
+            );
+            m.set(
+                "5",
+                {"label":"unlabeled","name":"Test INIT","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                    "task": {"progress":0,"state":"INIT","type":"transfer"}
+                }
+            );
+            m.set(
+                "6",
+                {"label":"unlabeled","name":"Test NULL","progress":50,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                    "task": null
+                }
+            );
+            updateTorrents(m);
+            return;
+        }
+
         torrentsync.event.add((e) => {
             if (e.method == 'labels.update') {
                 refreshLabels(e.params);
