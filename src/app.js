@@ -428,31 +428,37 @@ import "@fortawesome/fontawesome-free/css/all.css";
             );
             m.set(
                 "2",
-                {"label":"unlabeled","name":"Test QUEUED","progress":0,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                {"label":"unlabeled","name":"Test QUEUED","progress":0,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"2",
                     "task": {"progress":0,"state":"QUEUED","type":"transfer"}
                 }
             );
             m.set(
                 "3",
-                {"label":"unlabeled","name":"Test RUNNING","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                {"label":"unlabeled","name":"Test RUNNING","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"3",
                     "task": {"progress":50,"state":"RUNNING","type":"transfer"}
                 }
             );
             m.set(
                 "4",
-                {"label":"unlabeled","name":"Test FAILED","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                {"label":"unlabeled","name":"Test FAILED","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"4",
                     "task": {"progress":0,"state":"FAILED","type":"transfer"}
                 }
             );
             m.set(
                 "5",
-                {"label":"unlabeled","name":"Test INIT","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                {"label":"unlabeled","name":"Test INIT","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"5",
                     "task": {"progress":0,"state":"INIT","type":"transfer"}
                 }
             );
             m.set(
                 "6",
-                {"label":"unlabeled","name":"Test NULL","progress":50,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"1",
+                {"label":"unlabeled","name":"Test NULL","progress":50,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"6",
+                    "task": null
+                }
+            );
+            m.set(
+                "7",
+                {"label":"unlabeled","name":"Test NULL (complete)","progress":100,"save_path":"x","time_added":1639102220,"total_wanted":100,"hash":"7",
                     "task": null
                 }
             );
