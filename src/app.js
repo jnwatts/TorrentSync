@@ -21,7 +21,7 @@ import "@fortawesome/fontawesome-free/css/all.css";
     };
 
     window.glyph = (type) => {
-        var g = $('<i />');
+        var g = $('<span />');
         g.addClass('fa');
         if (type) {
             g.addClass('fa-' + type);
@@ -120,9 +120,9 @@ import "@fortawesome/fontawesome-free/css/all.css";
     window.updateCore = (params) => {
         if ('refreshing' in params) {
             if (params.refreshing) {
-                $('#refresh').children('.glyphicon').addClass('spinning');
+                $('#refresh').children('.fa').addClass('spinning');
             } else {
-                $('#refresh').children('.glyphicon').removeClass('spinning');
+                $('#refresh').children('.fa').removeClass('spinning');
             }
         }
     }
@@ -131,20 +131,18 @@ import "@fortawesome/fontawesome-free/css/all.css";
         var list = $('#labels-list');
         var item = list.children('.dropdown-item#label-' + l.label);
         if (item.length <= 0) {
-            item = $('<li />');
+            item = $('<a />');
             item.attr('id', 'label-' + l.label);
             item.addClass('dropdown-item');
+            item.attr('href', l.state.href);
+            item.text(l.label);
+            item.click((e) => {
+                jumpLabel(l);
+                $('#labels.open').find('button[data-toggle=dropdown]').dropdown('toggle');
+                return false;
+            });
             list.append(item);
         }
-        var a = $('<a />')
-        a.attr('href', l.state.href);
-        a.text(l.label);
-        a.click((e) => {
-            jumpLabel(l);
-            $('#labels.open').find('button[data-toggle=dropdown]').dropdown('toggle');
-            return false;
-        });
-        item.html(a);
     }
     window.findLabel = (label) => {
         var l = window.labels.find((l) => {
@@ -213,16 +211,24 @@ import "@fortawesome/fontawesome-free/css/all.css";
         };
 
         var addAction = (name, icon, action) => {
-            var a = a_button('sm');
-            a.attr('href', torrentsync.route('torrent.' + action, [t.hash]));
-            a.click(torrentsync.action);
-            a.append(glyph(icon));
-            a.attr('title', name);
-            // a.addClass('btn-secondary');
-            actions.append(a);
-        };
-        var addState = (icon) => {
-            actions.append(glyph(icon));
+            var e;
+            if (action) {
+                e = $('<a />');
+                e.attr('href', torrentsync.route('torrent.' + action, [t.hash]));
+                e.click(torrentsync.action);
+            } else {
+                e = $('<span />');
+            }
+            if (name) {
+                e.attr('title', name);
+            }
+            e.addClass('w-50');
+            e.addClass('text-center');
+            e.addClass('badge');
+            if (icon) {
+                e.append(glyph(icon));
+            }
+            actions.append(e);
         };
 
         var task = t.task;
@@ -243,21 +249,23 @@ import "@fortawesome/fontawesome-free/css/all.css";
         addField('added', moment.unix(t.time_added).format('YYYY\u2011MM\u2011DD HH:mm:ss'));
         // addField('label', t.label ? t.label : "unlabeled");
         var actions = addField('actions', '');
+        actions.attr('class', 'badge-group');
+        actions.attr('role', 'group');
         actions.empty();
 
         if (task) {
             if (task.state == Task.COMPLETE) {
-                addState('check');
-                addAction('Transfer', 'arrow-rotate-right', 'transfer');
+                addAction('Complete', 'check');
+                addAction('Retransfer', 'arrow-rotate-right', 'transfer');
             } else if (task.state == Task.QUEUED) {
-                addState('stopwatch');
+                addAction('Queued', 'stopwatch');
                 addAction('Abort', 'ban', 'abort');
             } else if (task.state == Task.RUNNING) {
-                addState('transfer');
+                addAction('Transferring', 'arrow-right-arrow-left');
                 addAction('Abort', 'ban', 'abort');
             } else if (task.state == Task.FAILED) {
-                addState('exclamation');
-                addAction('Transfer', 'arrow-rotate-right', 'transfer');
+                addAction('Failed', 'exclamation');
+                addAction('Retransfer', 'arrow-rotate-right', 'transfer');
             } else if (remote_progress >= 100) {
                 addAction('Transfer', 'download', 'transfer');
             }

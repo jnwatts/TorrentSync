@@ -11,7 +11,7 @@
         <link rel="stylesheet" type="text/css" href="app.scss">
     </head>
 
-    <body>
+    <body class="dark-mode">
         <div class="container">
 
 <br>
@@ -23,19 +23,19 @@ TODO:
 -->
 
 <div class="card">
-    <div class="card-header">
+    <h2 class="card-title">
         Torrents
-        <a class="btn btn-sm" type="button" id="refresh" href="#core.refresh">
-            <i class="fa fa-arrows-rotate"></i>
+        <a class="btn" type="button" id="refresh" href="#core.refresh">
+            <span class="fa fa-arrows-rotate"></span>
         </a>
-        <div class="dropdown" style="display:inline" id="labels">
-            <button class="btn dropdown-toggle" type="button" data-toggle="dropdown">
+        <div class="dropdown" id="labels">
+            <button id="labels-dropdown" class="btn" data-toggle="dropdown" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <span id="labels-current"></span>
             </button>
-            <ul class="dropdown-menu" id="labels-list">
-            </ul>
+            <div class="dropdown-menu" id="labels-list">
+            </div>
         </div>
-    </div>
+    </h2>
 
     <div class="card-body">
         <table class="table table-striped task-table">

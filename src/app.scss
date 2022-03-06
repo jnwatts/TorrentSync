@@ -1,7 +1,7 @@
 @import "../node_modules/halfmoon/css/halfmoon-variables.css";
 @import "../node_modules/halfmoon/css/halfmoon.css";
 
-.glyphicon.spinning {
+.spinning {
     animation: spin 1s infinite linear;
     -webkit-animation: spin2 1s infinite linear;
 }
