@@ -285,6 +285,11 @@ import "@fortawesome/fontawesome-free/css/all.css";
             }
         },
         open: () => {
+            if (process.env.NODE_ENV !== 'production') {
+                return new Promise((resolve, reject) => {
+                    resolve();
+                });
+            }
             return new Promise((resolve, reject) => {
                 var socket = torrentsync.socket;
                 if (socket) {
