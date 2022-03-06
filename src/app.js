@@ -1,7 +1,6 @@
 "use strict";
 
 import $ from 'jquery';
-import bootstrap from 'bootstrap';
 import jsonrpc from 'npm:jsonrpc-lite/jsonrpc.js';
 import moment from 'npm:moment/moment.js';
 import filesize from './filesize';
