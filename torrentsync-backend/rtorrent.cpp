@@ -29,6 +29,7 @@ void RTorrent::torrents(std::function<void(TorrentHash)> success, std::function<
 {
     QVariantList args;
     args
+        << ""
         << "main"
         << "d.hash="
         << "d.name="
@@ -38,7 +39,7 @@ void RTorrent::torrents(std::function<void(TorrentHash)> success, std::function<
         << "d.size_files="
         << "d.timestamp.started="; // date_added
 
-    this->invoke("d.multicall", args,
+    this->invoke("d.multicall2", args,
         [success](QVariant &arg, QNetworkReply* reply) {
             Q_UNUSED(reply);
             TorrentHash torrents;
