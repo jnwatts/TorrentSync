@@ -18,7 +18,7 @@ public:
     double progress;
     QString label;
     double timeAdded;
-    unsigned numFiles;
+    unsigned isMultiFile;
     double totalWanted;
 
     QJsonObject toJson(void) const;
