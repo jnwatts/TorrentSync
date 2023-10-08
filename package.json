@@ -16,7 +16,7 @@
   "devDependencies": {
     "@parcel/transformer-sass": "2.3.2",
     "parcel": "^2.3.2",
-    "postcss": "^8.0.0",
+    "postcss": "^8.4.31",
     "postcss-modules": "^4.3.0"
   },
   "dependencies": {
