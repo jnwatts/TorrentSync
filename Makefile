@@ -19,6 +19,7 @@ frontend-deps:
 	yarn install
 
 frontend:
+	rm -Rf ./dist/
 	yarn parcel build --public-url .
 
 frontend-dev:
