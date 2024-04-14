@@ -2,7 +2,6 @@
 
 import $ from 'jquery';
 import jsonrpc from 'npm:jsonrpc-lite/jsonrpc.js';
-import moment from 'npm:moment/moment.js';
 import filesize from './filesize';
 import "@fortawesome/fontawesome-free/css/all.css";
 
@@ -243,10 +242,15 @@ import "@fortawesome/fontawesome-free/css/all.css";
 
         // console.log(t);
 
+        var formatDate = (t) => {
+            var d = new Date(parseInt(t)*1000);
+            return d.toISOString().replace("T", " ");
+        };
+
         addField('name', t.name.replace(/\./g, ".\u200B"));
         addProgress(remote_progress, local_progress);
         addField('size', filesize(t.total_wanted));
-        addField('added', moment.unix(t.time_added).format('YYYY\u2011MM\u2011DD HH:mm:ss'));
+        addField('added', formatDate(t.time_added));
         // addField('label', t.label ? t.label : "unlabeled");
         var actions = addField('actions', '');
         actions.attr('class', 'badge-group');
