@@ -34,7 +34,7 @@ void RTorrent::torrents(std::function<void(TorrentHash)> success, std::function<
         << "d.hash="
         << "d.name="
         << "d.directory=" // save_path
-        << "d.bytes_done=" // progress
+        << "d.completed_bytes=" // progress
         << "d.size_bytes=" // total_wanted
         << "d.is_multi_file="
         << "d.timestamp.started="; // date_added
@@ -49,13 +49,16 @@ void RTorrent::torrents(std::function<void(TorrentHash)> success, std::function<
                 t.hash = l[0].toString();
                 t.name = l[1].toString();
                 t.savePath = l[2].toString();
-                t.progress = l[3].toDouble();
+                double completed_bytes = l[3].toDouble();
                 t.totalWanted = l[4].toDouble();
                 t.isMultiFile = l[5].toULongLong();
                 t.timeAdded = l[6].toDouble();
                 t.label = "unlabeled";
                 if (t.isMultiFile == 0)
                     t.savePath += "/" + t.name;
+                t.progress = 0;
+                if (t.totalWanted > 0.0)
+                    t.progress = (100.0 * completed_bytes) / t.totalWanted;
                 torrents[t.hash] = t;
             }
             success(torrents);
